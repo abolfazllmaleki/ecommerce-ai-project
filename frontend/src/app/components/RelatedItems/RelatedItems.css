@@ -1,0 +1,22 @@
+.related-items {
+    margin-top: 2rem;
+  }
+  
+  .items {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .item {
+    text-align: center;
+    border: 1px solid #ddd;
+    padding: 1rem;
+    border-radius: 8px;
+  }
+  
+  .item img {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 0.5rem;
+  }
+  
