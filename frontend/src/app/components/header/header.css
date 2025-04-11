@@ -1,0 +1,163 @@
+/* Header.css */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: white;
+  color: black;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.logo a {
+  text-decoration: none;
+  font-size: 24px;
+  font-weight: bold;
+  color: black;
+}
+
+.nav .nav-links {
+  display: flex;
+  gap: 20px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav .nav-links a {
+  text-decoration: none;
+  font-size: 16px;
+  color: black;
+  transition: color 0.3s ease;
+}
+
+.nav .nav-links a:hover {
+  color: orange;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search-input {
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: orange;
+}
+
+.search-button {
+  background-color: orange;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: white;
+  cursor: pointer;
+}
+
+.search-button:hover {
+  background-color: darkorange;
+}
+
+.header-icons {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.icon {
+  font-size: 20px;
+  color: black;
+  text-decoration: none;
+}
+
+.icon:hover {
+  color: orange;
+}
+
+.cart-icon {
+  position: relative;
+}
+
+.cart-count {
+  position: absolute;
+  top: -5px;
+  right: -10px;
+  background-color: red;
+  color: white;
+  font-size: 12px;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .nav .nav-links {
+    gap: 15px;
+  }
+
+  .search-bar {
+    flex: 1;
+    justify-content: space-between;
+  }
+
+  .logo a {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav .nav-links {
+    display: none; /* Hide navigation links on tablets */
+  }
+
+  .search-bar {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .header-icons {
+    gap: 15px;
+  }
+
+  .logo a {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .search-bar {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 5px;
+  }
+
+  .search-input {
+    flex: 1;
+    width: 100%;
+  }
+
+  .header-icons {
+    justify-content: flex-end;
+    width: 100%;
+  }
+
+  .logo a {
+    font-size: 18px;
+  }
+}
