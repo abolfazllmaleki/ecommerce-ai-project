@@ -3,10 +3,11 @@
     "builds": [
       {
         "src": "frontend/package.json",
-        "use": "@vercel/next"
+        "use": "@vercel/next",
+        "config": { "distDir": ".next" }
       },
       {
-        "src": "backend/package.json",
+        "src": "backend/src/main.ts",
         "use": "@vercel/node"
       }
     ],
@@ -17,7 +18,8 @@
       },
       {
         "src": "/(.*)",
-        "dest": "frontend/$1"
+        "dest": "frontend/$1",
+        "headers": { "x-matched-path": "/$1" }
       }
     ]
   }
