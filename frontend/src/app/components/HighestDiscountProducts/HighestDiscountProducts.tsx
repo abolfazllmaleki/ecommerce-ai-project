@@ -21,7 +21,7 @@ export default function HighestDiscountProducts() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('http://localhost:3000/products/highest-discount?limit=10');
+        const response = await fetch(`${process.env.BACKEND_URL}/products/highest-discount?limit=10`);
         
         if (!response.ok) {
           throw new Error('خطا در دریافت محصولات');

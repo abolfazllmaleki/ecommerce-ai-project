@@ -16,7 +16,7 @@ const Slider = () => {
   useEffect(() => {
     const fetchTopRatedProducts = async () => {
       try {
-        const response = await fetch('http://localhost:3000/products/top-rated?limit=4');
+        const response = await fetch(`${process.env.BACKEND_URL}/products/top-rated?limit=4`);
         const data: Product[] = await response.json();
         setSlides(data);
       } catch (error) {

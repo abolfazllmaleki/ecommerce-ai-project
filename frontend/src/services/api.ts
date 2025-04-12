@@ -1,7 +1,7 @@
 // services/api.ts
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:3000"; // آدرس بک‌اند NestJS
+const API_BASE_URL = `${process.env.BACKEND_URL}`; // آدرس بک‌اند NestJS
 
 export const productService = {
   async searchProducts(params: {

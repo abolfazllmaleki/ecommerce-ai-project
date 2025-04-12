@@ -18,7 +18,7 @@ export async function GET(
   try {
     console.log("are we connected???");
     // Use your actual Nest.js backend URL
-    const backendUrl = `http://localhost:3000/products/${id}`;
+    const backendUrl = `${process.env.BACKEND_URL}/products/${id}`;
 
     const response = await fetch(backendUrl);
 

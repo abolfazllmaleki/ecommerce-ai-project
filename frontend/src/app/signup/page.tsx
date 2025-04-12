@@ -11,7 +11,7 @@ const SignupPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:3000/auth/register', {  // ✅ Connects to NestJS
+      const response = await fetch(`${process.env.BACKEND_URL}/auth/register`, {  // ✅ Connects to NestJS
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),

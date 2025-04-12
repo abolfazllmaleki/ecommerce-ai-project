@@ -18,7 +18,7 @@ const StarRating: React.FC<StarRatingProps> = ({ userId, productId, initialRatin
       const previousRating = userRating;
       setUserRating(newRating);
   
-      const response = await fetch(`http://localhost:3000/users/user/${userId}/ratings`, {
+      const response = await fetch(`${process.env.BACKEND_URL}/users/user/${userId}/ratings`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

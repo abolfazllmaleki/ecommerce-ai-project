@@ -9,14 +9,15 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   // Fixed CORS configuration (removed trailing slashes)
-  app.enableCors({
-    origin: [
-      'https://ecommerce-ai-project-uhbj.vercel.app', // No trailing slash!
-      'http://localhost:3000'
-    ],
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true
-  });
+  // app.enableCors({
+  //   origin: [
+  //     'https://ecommerce-ai-project-uhbj.vercel.app', // No trailing slash!
+  //     'http://localhost:3000'
+  //   ],
+  //   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  //   credentials: true
+  // });
+  app.enableCors({ origin: '*' });
 
   // Body parser configuration
   app.use(json({ limit: '10mb' }));

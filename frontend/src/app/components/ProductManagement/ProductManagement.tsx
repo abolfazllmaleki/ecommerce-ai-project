@@ -5,7 +5,7 @@ import { Product } from '../../types/types';
 import ProductForm from '../ProductForm/ProductForm';
 import ProductTable from '../ProductTable/ProductTable';
 
-const API_URL = 'http://localhost:3000/products';
+const API_URL = `${process.env.BACKEND_URL}/products`;
 
 const ProductManagement = () => {
   const [products, setProducts] = useState<Product[]>([]);

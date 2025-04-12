@@ -30,7 +30,7 @@ const Recommendations = () => {
 
       try {
         // Step 1: Fetch the list of recommended product IDs
-        const response = await fetch(`http://localhost:8000/recommend/${user._id}`, {
+        const response = await fetch(`${process.env.BACKEND_URL}/recommend/${user._id}`, {
           headers: {
             'Content-Type': 'application/json',
           }
@@ -51,7 +51,7 @@ const Recommendations = () => {
         // Step 2: Fetch product details for each product ID
         const productDetails = await Promise.all(
           productIds.map(async (id) => {
-            const productResponse = await fetch(`http://localhost:3000/products/${id}`);
+            const productResponse = await fetch(`${process.env.BACKEND_URL}/products/${id}`);
             if (!productResponse.ok) {
               throw new Error(`Failed to fetch product details for ID: ${id}`);
             }

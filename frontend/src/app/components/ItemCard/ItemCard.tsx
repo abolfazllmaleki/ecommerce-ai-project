@@ -38,7 +38,7 @@ const ItemCard: React.FC<ItemCardProps> = ({
         </span>
       )}
 
-      <Link href={`http://localhost:3001/ProductDetail/${id}`}>
+      <Link href={`${process.env.FRONTEND_URL}/ProductDetail/${id}`}>
         <div className="relative h-48 bg-gray-50 overflow-hidden">
           <Image
             src={image}
@@ -51,7 +51,7 @@ const ItemCard: React.FC<ItemCardProps> = ({
       </Link>
 
       <div className="p-4">
-        <Link href={`http://localhost:3001/ProductDetail/${id}`} className="hover:text-red-500">
+        <Link href={`${process.env.FRONTEND_URL}/ProductDetail/${id}`} className="hover:text-red-500">
           <h3 className="text-sm font-semibold text-gray-800 mb-2 truncate">{name}</h3>
         </Link>
         

@@ -6,7 +6,7 @@ export async function GET(
 ) {
   try {
     console.log("to here...");
-    const response = await fetch(`http://localhost:3000/products/${params.id}`);
+    const response = await fetch(`${process.env.BACKEND_URL}/products/${params.id}`);
 
     if (!response.ok) {
       throw new Error(`Backend responded with ${response.status}`);

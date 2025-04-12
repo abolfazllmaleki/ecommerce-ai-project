@@ -21,7 +21,7 @@ export default function TopRatedProducts() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('http://localhost:3000/products/top-rated?limit=12');
+        const response = await fetch(`${process.env.BACKEND_URL}/products/top-rated?limit=12`);
         
         if (!response.ok) {
           throw new Error('خطا در دریافت محصولات');
