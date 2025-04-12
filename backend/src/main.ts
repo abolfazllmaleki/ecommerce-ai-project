@@ -10,7 +10,7 @@ async function bootstrap() {
 
   app.enableCors({
     origin: [
-      'https://your-project.vercel.app',
+      'https://ecommerce-ai-project-uhbj.vercel.app/',
       'http://localhost:3000'
     ]
   });
