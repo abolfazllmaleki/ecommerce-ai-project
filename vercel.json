@@ -1,25 +1,28 @@
 {
-    "version": 2,
-    "builds": [
-      {
-        "src": "frontend/package.json",
-        "use": "@vercel/next",
-        "config": { "distDir": ".next" }
-      },
-      {
-        "src": "backend/src/main.ts",
-        "use": "@vercel/node"
+  "version": 2,
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/next",
+      "config": { "distDir": ".next" }
+    },
+    {
+      "src": "backend/package.json",
+      "use": "@vercel/node",
+      "config": {
+        "distDir": "backend/dist",
+        "includeFiles": ["backend/dist/**"]
       }
-    ],
-    "routes": [
-      {
-        "src": "/api/(.*)",
-        "dest": "backend/src/main.ts"
-      },
-      {
-        "src": "/(.*)",
-        "dest": "frontend/$1",
-        "headers": { "x-matched-path": "/$1" }
-      }
-    ]
-  }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/backend/dist/main.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/$1"
+    }
+  ]
+}
