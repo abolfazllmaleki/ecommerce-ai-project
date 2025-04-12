@@ -18,6 +18,7 @@ async function bootstrap() {
   app.use(urlencoded({ extended: true, limit: '10mb' }));
 
   const port = configService.get<number>('PORT') || 3000;
+  app.setGlobalPrefix('api');
   await app.listen(port);
   
   console.log(`Application is running on: ${await app.getUrl()}`);
