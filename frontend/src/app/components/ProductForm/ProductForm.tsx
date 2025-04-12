@@ -7,7 +7,7 @@ interface ProductFormProps {
 }
 
 const ProductForm = ({ onSubmit }: ProductFormProps) => {
-  const [newProduct, setNewProduct] = useState<Omit<Product, '_id'>>({
+  const [newProduct, setNewProduct] = useState<any>({
     name: '',
     price: 0,
     discount: 0,

@@ -1,34 +1,29 @@
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string; field: string } }
-) {
-  try {
-    const { id, field } = params;
+// route.ts
 
-    // فراخوانی به بک‌اند NestJS
-    const nestResponse = await fetch(
-      `http://localhost:3000/products/${id}/increment/views`,
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+): Promise<NextResponse> {
+  try {
+    const { id } = params;
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/products/${id}/increment/views`,
       {
-        method: "PATCH",
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
       }
     );
 
-    if (!nestResponse.ok) {
-      const errorData = await nestResponse.json();
-      return new Response(JSON.stringify(errorData), {
-        status: nestResponse.status,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
+    const data = await response.json();
 
-    return new Response(JSON.stringify(await nestResponse.json()), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json(data);
   } catch (error) {
-    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }

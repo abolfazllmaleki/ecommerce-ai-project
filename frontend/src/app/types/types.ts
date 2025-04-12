@@ -53,7 +53,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role?: string;
 }
 
 export interface HomeContent {
@@ -62,7 +62,7 @@ export interface HomeContent {
   promotionalDiscount: number;
 }
 export interface Category {
-  _id: string;
+  _id: any;
   name: string;
   icon: React.ReactNode;
   href: string;

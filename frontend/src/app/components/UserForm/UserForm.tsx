@@ -41,7 +41,7 @@ const UserForm = ({ onSubmit }: UserFormProps) => {
     onSubmit({
       name: formData.name,
       email: formData.email,
-      password: formData.password
+      password: formData.password,
     });
     
     setFormData({ name: '', email: '', password: '' });

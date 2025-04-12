@@ -2,8 +2,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import Image from 'next/image';
-import Link from 'next/link';
+
 import ItemCard from '../ItemCard/ItemCard';
 import { FiHeart, FiTrash2 } from 'react-icons/fi';
 

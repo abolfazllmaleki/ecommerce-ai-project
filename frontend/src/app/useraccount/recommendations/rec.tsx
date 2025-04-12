@@ -2,16 +2,17 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/app/context/AuthContext";
 import ItemCard from "@/app/components/ItemCard/ItemCard";
+import { Product } from "@/app/types/types";
 
-interface Product {
-  _id: string;
-  name: string;
-  image?: string;
-  currentPrice: number;
-  originalPrice?: number;
-  category: string;
-  views: number;
-}
+// interface Product {
+//   _id: string;
+//   name: string;
+//   image?: string;
+//   currentPrice: number;
+//   originalPrice?: number;
+//   category: string;
+//   views: number;
+// }
 
 const Recommendations = () => {
   const { user } = useAuth();
@@ -84,7 +85,7 @@ const Recommendations = () => {
           name={product.name}
           currentPrice={product.price}
           originalPrice={product.price}
-          label={product.views > 100 ? "HOT" : "NEW"}
+          // label={product.views > 100 ? "HOT" : "NEW"}
           rating={4.5} // Fetch real rating if available
           reviews={Math.floor(Math.random() * 100)}
         />

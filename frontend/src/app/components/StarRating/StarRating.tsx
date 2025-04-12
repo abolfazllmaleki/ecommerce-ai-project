@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { FaStar } from 'react-icons/fa';
-import { rateProduct } from '@/services/rating';
 
 interface StarRatingProps {
   userId: string;

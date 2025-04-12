@@ -5,12 +5,12 @@ import {Category} from '../../types/types'
 
 const CategoriesSection = () => {
   const categories: Category[] = [
-    { id: 1, name: "Phones", icon: <FaPhone className="w-6 h-6" />, href: "/category/phones" },
-    { id: 2, name: "Computers", icon: <FaLaptop className="w-6 h-6" />, href: "/category/computers" },
-    { id: 3, name: "SmartWatch", icon: <FaClock className="w-6 h-6" />, href: "/category/smartwatch" },
-    { id: 4, name: "Camera", icon: <FaCamera className="w-6 h-6" />, href: "/category/camera" },
-    { id: 5, name: "HeadPhones", icon: <FaHeadphones className="w-6 h-6" />, href: "/category/headphones" },
-    { id: 6, name: "Gaming", icon: <FaGamepad className="w-6 h-6" />, href: "/category/gaming" },
+    { _id: 1, name: "Phones", icon: <FaPhone className="w-6 h-6" />, href: "/category/phones" },
+    { _id: 2, name: "Computers", icon: <FaLaptop className="w-6 h-6" />, href: "/category/computers" },
+    { _id: 3, name: "SmartWatch", icon: <FaClock className="w-6 h-6" />, href: "/category/smartwatch" },
+    { _id: 4, name: "Camera", icon: <FaCamera className="w-6 h-6" />, href: "/category/camera" },
+    { _id: 5, name: "HeadPhones", icon: <FaHeadphones className="w-6 h-6" />, href: "/category/headphones" },
+    { _id: 6, name: "Gaming", icon: <FaGamepad className="w-6 h-6" />, href: "/category/gaming" },
   ];
 
   return (
@@ -19,7 +19,7 @@ const CategoriesSection = () => {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {categories.map((category) => (
           <Link
-            key={category.id}
+            key={category._id}
             href={category.href}
             className="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 border hover:border-primary-500"
             aria-label={`Browse ${category.name}`}
