@@ -11,8 +11,8 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AddInteractionDto } from './dto/add-interaction.dto';
 import { RateProductDto } from './dto/rate-product.dto';
-import { Product } from 'src/products/schemas/product.schema';
-import { ProductsService } from 'src/products/products.service';
+import { Product } from '../products/schemas/product.schema';
+import { ProductsService } from '../products/products.service';
 
 @Injectable()
 export class UsersService {
