@@ -12,7 +12,7 @@ const UserManagement = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch(`${process.env.BACKEND_URL}/users`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users`);
         if (!response.ok) throw new Error('Failed to fetch users');
         const { data } = await response.json();
         
@@ -36,7 +36,7 @@ const UserManagement = () => {
 
   const handleAddUser = async (newUser: Omit<User, 'id'>) => {
     try {
-      const response = await fetch(`${process.env.BACKEND_URL}/users`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newUser),
@@ -59,7 +59,7 @@ const UserManagement = () => {
 
   const handleRemoveUser = async (userId: string) => {
     try {
-      const response = await fetch(`${process.env.BACKEND_URL}/users/${userId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${userId}`, {
         method: 'DELETE',
       });
 

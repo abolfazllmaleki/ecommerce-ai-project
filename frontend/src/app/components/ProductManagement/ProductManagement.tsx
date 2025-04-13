@@ -5,8 +5,8 @@ import { Product } from '../../types/types';
 import ProductForm from '../ProductForm/ProductForm';
 import ProductTable from '../ProductTable/ProductTable';
 
-const API_URL = `${process.env.BACKEND_URL}/products`;
-
+const API_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL}/products`;
+console.log(process.env.NEXT_PUBLIC_BACKEND_URL)
 const ProductManagement = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);

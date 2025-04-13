@@ -200,7 +200,7 @@ const UserProfile = () => {
         email: formData.email,
       };
 
-      const response = await fetch(`http://localhost:3000/users/${user._id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${user._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

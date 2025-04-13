@@ -30,7 +30,7 @@ const Recommendations = () => {
 
       try {
         // Step 1: Fetch the list of recommended product IDs
-        const response = await fetch(`${process.env.BACKEND_URL}/recommend/${user._id}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/recommend/${user._id}`, {
           headers: {
             'Content-Type': 'application/json',
           }

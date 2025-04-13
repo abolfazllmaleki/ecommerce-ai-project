@@ -29,7 +29,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const fetchUser = async (token: string) => {
     try {
-      const response = await fetch(`${process.env.BACKEND_URL}/users/me`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

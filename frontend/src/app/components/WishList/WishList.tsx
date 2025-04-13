@@ -15,7 +15,7 @@ const WishList = () => {
   useEffect(() => {
     const fetchWishlist = async () => {
       try {
-        const response = await fetch(`${process.env.BACKEND_URL}/users/me/wishlist`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me/wishlist`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) throw new Error('Failed to fetch wishlist');
@@ -32,7 +32,7 @@ const WishList = () => {
 
   const handleRemove = async (productId: string) => {
     try {
-      await fetch(`${process.env.BACKEND_URL}/users/me/wishlist/remove`, {
+      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me/wishlist/remove`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
