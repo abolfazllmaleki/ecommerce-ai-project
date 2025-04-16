@@ -28,7 +28,7 @@ const ProductManagement = () => {
       // Calculate stats
       setStats({
         total: response.data.length,
-        active: response.data.filter(p => p.status === 'active').length,
+        active: response.data.filter(p => p.stock).length,
         outOfStock: response.data.filter(p => p.stock === 0).length
       });
       
