@@ -25,7 +25,6 @@ const ProductManagement = () => {
       const response = await axios.get<Product[]>(API_URL);
       setProducts(response.data);
       
-      // Calculate stats
       setStats({
         total: response.data.length,
         active: response.data.filter(p => p.stock).length,

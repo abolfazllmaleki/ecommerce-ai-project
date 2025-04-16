@@ -100,9 +100,11 @@ export class ProductsService {
     minRating?: number;
     categories?: Types.ObjectId[];
     sortBy?: string;
+    page:number,
+    limit:number
   }): Promise<Product[]> {
     try {
-      const { query, minPrice, maxPrice, minRating, categories, sortBy } =
+      const { query, minPrice, maxPrice, minRating, categories, sortBy ,page,limit } =
         filters;
 
       const queryConditions: any = {};
@@ -143,10 +145,13 @@ export class ProductsService {
       } else if (query) {
         sortOptions = { score: { $meta: 'textScore' } };
       }
+      const skip = (page - 1) * limit;
 
       return this.productModel
         .find(queryConditions)
         .sort(sortOptions)
+        .skip(skip)
+        .limit(limit)
         .select('-__v')
         .exec();
     } catch (error) {

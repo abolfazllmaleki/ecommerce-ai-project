@@ -11,6 +11,8 @@ export const productService = {
     minRating?: number;
     categories?: string[];
     sortBy?: string;
+    page?:number,
+    limit?:number,
   }) {
   console.log(API_BASE_URL)
   console.log(params)
