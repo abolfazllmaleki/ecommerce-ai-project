@@ -5,7 +5,6 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  // Validate parameter after proper destructuring
   const { id } = params;
 
   if (!id) {
@@ -16,9 +15,9 @@ export async function GET(
   }
 
   try {
-    console.log("are we connected???");
-    // Use your actual Nest.js backend URL
-    const backendUrl = `${process.env.BACKEND_URL}/products/${id}`;
+    console.log(process.env.NEXT_PUBLIC_BACKEND_URL)
+
+    const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/products/${id}`;
 
     const response = await fetch(backendUrl);
 

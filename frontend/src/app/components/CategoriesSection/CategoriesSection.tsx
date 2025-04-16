@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { FaPhone, FaLaptop, FaClock, FaCamera, FaHeadphones, FaGamepad } from "react-icons/fa";
-
 import {Category} from '../../types/types'
 
 const CategoriesSection = () => {
@@ -14,18 +13,24 @@ const CategoriesSection = () => {
   ];
 
   return (
-    <section className="container mx-auto px-4 py-8">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Browse By Category</h2>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <section className="container mx-auto px-4 py-12">
+      <div className="text-center mb-10">
+        <h2 className="text-3xl font-bold mb-3 text-gray-800">Browse By Category</h2>
+        <p className="text-gray-500 max-w-2xl mx-auto">Discover products in our most popular categories</p>
+      </div>
+      
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
         {categories.map((category) => (
           <Link
             key={category._id}
             href={category.href}
-            className="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 border hover:border-primary-500"
+            className="group flex flex-col items-center p-6 bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-red-200 hover:bg-red-50"
             aria-label={`Browse ${category.name}`}
           >
-            <div className="mb-2 text-primary-600">{category.icon}</div>
-            <span className="text-sm font-medium text-gray-700 hover:text-primary-600">
+            <div className="mb-4 p-4 bg-red-50 group-hover:bg-white rounded-full text-red-500 group-hover:text-red-600 transition-colors duration-300">
+              {category.icon}
+            </div>
+            <span className="text-md font-semibold text-gray-700 group-hover:text-red-600 transition-colors duration-300">
               {category.name}
             </span>
           </Link>

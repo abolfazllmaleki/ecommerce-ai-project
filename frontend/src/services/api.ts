@@ -1,7 +1,7 @@
 // services/api.ts
 import axios from "axios";
 
-const API_BASE_URL = `${process.env.BACKEND_URL}`; // آدرس بک‌اند NestJS
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL}`; // آدرس بک‌اند NestJS
 
 export const productService = {
   async searchProducts(params: {
@@ -12,6 +12,9 @@ export const productService = {
     categories?: string[];
     sortBy?: string;
   }) {
+  console.log(API_BASE_URL)
+  console.log(params)
+
     const response = await axios.get(`${API_BASE_URL}/products/search`, {
       params: {
         q: params.query,

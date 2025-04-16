@@ -9,7 +9,7 @@ export async function PATCH(
     const token = req.headers.get("Authorization")?.split(" ")[1];
 
     const response = await fetch(
-      `${process.env.BACKEND_URL}/users/me/wishlist/${action}`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me/wishlist/${action}`,
       {
         method: "PATCH",
         headers: {

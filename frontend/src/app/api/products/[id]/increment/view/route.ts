@@ -10,7 +10,7 @@ export async function PATCH(
     const { id } = params;
 
     const response = await fetch(
-      `${process.env.BACKEND_URL}/products/${id}/increment/views`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/products/${id}/increment/views`,
       {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },

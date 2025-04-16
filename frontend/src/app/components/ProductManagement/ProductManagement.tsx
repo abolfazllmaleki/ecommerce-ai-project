@@ -1,38 +1,66 @@
 'use client';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { FiPlus, FiRefreshCw, FiTrash2, FiEdit2, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
 import { Product } from '../../types/types';
 import ProductForm from '../ProductForm/ProductForm';
 import ProductTable from '../ProductTable/ProductTable';
 
 const API_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL}/products`;
-console.log(process.env.NEXT_PUBLIC_BACKEND_URL)
+
 const ProductManagement = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    outOfStock: 0
+  });
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get<Product[]>(API_URL);
+      setProducts(response.data);
+      
+      // Calculate stats
+      setStats({
+        total: response.data.length,
+        active: response.data.filter(p => p.status === 'active').length,
+        outOfStock: response.data.filter(p => p.stock === 0).length
+      });
+      
+      showSuccess('Products loaded successfully');
+    } catch (err) {
+      showError('Failed to fetch products');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const showError = (message: string) => {
+    setError(message);
+    setTimeout(() => setError(null), 5000);
+  };
+
+  const showSuccess = (message: string) => {
+    setSuccess(message);
+    setTimeout(() => setSuccess(null), 5000);
+  };
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await axios.get<Product[]>(API_URL);
-        setProducts(response.data);
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to fetch products.');
-        setLoading(false);
-      }
-    };
-
     fetchProducts();
   }, []);
 
   const handleAddProduct = async (newProduct: Product) => {
     try {
       const response = await axios.post<Product>(API_URL, newProduct);
-      setProducts((prev) => [...prev, response.data]);
+      setProducts(prev => [...prev, response.data]);
+      showSuccess('Product added successfully');
     } catch (err) {
-      setError('Failed to add product.');
+      showError('Failed to add product');
     }
   };
 
@@ -42,49 +70,171 @@ const ProductManagement = () => {
         `${API_URL}/${updatedProduct._id}`,
         updatedProduct
       );
-      setProducts((prev) =>
-        prev.map((p) => (p._id === updatedProduct._id ? response.data : p))
-      );
+      setProducts(prev => prev.map(p => p._id === updatedProduct._id ? response.data : p));
+      showSuccess('Product updated successfully');
     } catch (err) {
-      setError('Failed to update product.');
+      showError('Failed to update product');
     }
   };
 
   const handleDeleteProduct = async (productId: string) => {
     try {
       await axios.delete(`${API_URL}/${productId}`);
-      setProducts((prev) => prev.filter((p) => p._id !== productId));
+      setProducts(prev => prev.filter(p => p._id !== productId));
+      showSuccess('Product deleted successfully');
     } catch (err) {
-      setError('Failed to delete product.');
+      showError('Failed to delete product');
     }
   };
 
-  if (loading) return (
-    <div className="text-center py-8">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto"></div>
-    </div>
-  );
-
-  if (error) return (
-    <div className="bg-red-50 text-red-500 p-4 rounded-lg mt-6">
-      {error}
-    </div>
-  );
-
   return (
-    <div className="space-y-8">
-      <h2 className="text-2xl font-bold text-gray-800">Product Management</h2>
-      <div className="bg-white p-6 rounded-xl shadow-lg">
-        <ProductForm onSubmit={handleAddProduct} />
+    <div className="space-y-6">
+      {/* Dashboard Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          {/* <h1 className="text-3xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
+            Product Dashboard
+          </h1> */}
+          {/* <p className="text-gray-500">Manage your product inventory with ease</p> */}
+        </div>
+        
+        <div className="flex gap-3">
+          <button
+            onClick={fetchProducts}
+            className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 shadow-xs transition-all hover:shadow-sm"
+          >
+            <FiRefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
-      <div className="bg-white p-6 rounded-xl shadow-lg">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Current Products</h3>
-        <ProductTable
-          products={products}
-          onUpdate={handleUpdateProduct}
-          onDelete={handleDeleteProduct}
-        />
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-gradient-to-br from-red-50 to-white p-5 rounded-xl border border-red-100 shadow-xs">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm text-gray-500">Total Products</p>
+              <h3 className="text-2xl font-bold mt-1">{stats.total}</h3>
+            </div>
+            <div className="bg-red-100 p-3 rounded-lg">
+              <FiPlus className="text-red-500 w-5 h-5" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-green-50 to-white p-5 rounded-xl border border-green-100 shadow-xs">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm text-gray-500">Active Products</p>
+              <h3 className="text-2xl font-bold mt-1">{stats.active}</h3>
+            </div>
+            <div className="bg-green-100 p-3 rounded-lg">
+              <FiCheckCircle className="text-green-500 w-5 h-5" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-amber-50 to-white p-5 rounded-xl border border-amber-100 shadow-xs">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm text-gray-500">Out of Stock</p>
+              <h3 className="text-2xl font-bold mt-1">{stats.outOfStock}</h3>
+            </div>
+            <div className="bg-amber-100 p-3 rounded-lg">
+              <FiAlertCircle className="text-amber-500 w-5 h-5" />
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Status Toasts */}
+      {error && (
+        <div className="animate-fade-in-up bg-red-50 border-l-4 border-red-500 p-4 rounded-lg flex items-start gap-3 shadow-lg">
+          <FiAlertCircle className="text-red-500 mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-red-700 font-medium">{error}</p>
+          </div>
+          <button 
+            onClick={() => setError(null)}
+            className="text-red-500 hover:text-red-700"
+          >
+            &times;
+          </button>
+        </div>
+      )}
+
+      {success && (
+        <div className="animate-fade-in-up bg-green-50 border-l-4 border-green-500 p-4 rounded-lg flex items-start gap-3 shadow-lg">
+          <FiCheckCircle className="text-green-500 mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-green-700 font-medium">{success}</p>
+          </div>
+          <button 
+            onClick={() => setSuccess(null)}
+            className="text-green-500 hover:text-green-700"
+          >
+            &times;
+          </button>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Add Product Card */}
+        <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-red-50 to-white px-6 py-4 border-b border-gray-200">
+            <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+              <FiPlus className="text-red-500" />
+              <span>Add New Product</span>
+            </h3>
+          </div>
+          <div className="p-6">
+            <ProductForm onSubmit={handleAddProduct} />
+          </div>
+        </div>
+
+        {/* Product Table Card */}
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-red-50 to-white px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 className="font-semibold text-gray-800">Product Inventory</h3>
+            <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-medium">
+              {products.length} items
+            </span>
+          </div>
+          <div className="p-1">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-red-500"></div>
+                <p className="text-gray-500">Loading products...</p>
+              </div>
+            ) : (
+              <ProductTable
+                products={products}
+                onUpdate={handleUpdateProduct}
+                onDelete={handleDeleteProduct}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Custom Animation CSS */}
+      <style jsx>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fade-in-up {
+          animation: fadeInUp 0.3s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 };
