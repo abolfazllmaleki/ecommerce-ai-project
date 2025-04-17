@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import ProductDetailClient from './ProductDetailClient';
+// import ProductDetailClient from './ProductDetailClient';
 import LoadingSpinner from '@/app/components/LoadingSpinner/LoadingSpinner';
 
 async function getProduct(id: string) {
@@ -29,7 +29,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
     const product = await getProduct(params.id);
     return (
       <Suspense fallback={<LoadingSpinner />}>
-        <ProductDetailClient initialProduct={product} />
+      <>$+{product.name}</>
       </Suspense>
     );
   } catch (error) {
