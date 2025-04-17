@@ -13,8 +13,8 @@ export default async function ProductPage({ params }: { params: { id: string } }
   console.log('helllo')
 
   return (
-    
+    <Suspense fallback={<LoadingSpinner />}>
       <ProductDetailClient initialProduct={product} />
-    
+    </Suspense>
   );
 }
