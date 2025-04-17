@@ -1,5 +1,3 @@
-'use client'; // اضافه کردن این خط اگر از هوک‌ها استفاده می‌کنید
-
 import { Suspense } from 'react';
 import ProductDetailClient from './ProductDetailClient';
 import LoadingSpinner from '@/app/components/LoadingSpinner/LoadingSpinner';
@@ -7,7 +5,7 @@ import LoadingSpinner from '@/app/components/LoadingSpinner/LoadingSpinner';
 async function getProduct(id: string) {
   const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const apiUrl = `${baseUrl}/products/${id}`;
-  
+  console.log('ss===='+baseUrl)
   console.log('Fetching from:', apiUrl); // برای دیباگ
 
   const res = await fetch(apiUrl, {
