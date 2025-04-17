@@ -1,10 +1,10 @@
 import { Suspense } from 'react';
-// import ProductDetailClient from './ProductDetailClient';
+import ProductDetailClient from './ProductDetailClient';
 import LoadingSpinner from '@/app/components/LoadingSpinner/LoadingSpinner';
 
 async function getProduct(id: string) {
   const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-  const apiUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/products/${id}`;
+  const apiUrl = `${baseUrl}/products/${id}`;
   console.log('ss===='+baseUrl)
   console.log('Fetching from:', apiUrl); // برای دیباگ
 
@@ -29,7 +29,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
     const product = await getProduct(params.id);
     return (
       <Suspense fallback={<LoadingSpinner />}>
-      <>$+{product.name}</>
+        <ProductDetailClient initialProduct={product} />
       </Suspense>
     );
   } catch (error) {
