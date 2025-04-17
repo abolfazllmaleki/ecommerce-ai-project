@@ -64,15 +64,15 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
     }
   };
 
-  const incrementViews = async () => {
-    try {
-      await fetch(`/api/products/${product._id}/increment/view`, {
-        method: 'PATCH',
-      });
-    } catch (error) {
-      console.error('Failed to increment views:', error);
-    }
-  };
+  // const incrementViews = async () => {
+  //   try {
+  //     await fetch(`/api/products/${product._id}/increment/view`, {
+  //       method: 'PATCH',
+  //     });
+  //   } catch (error) {
+  //     console.error('Failed to increment views:', error);
+  //   }
+  // };
 
   useEffect(() => {
     const checkWishlistStatus = () => {
@@ -90,7 +90,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
     };
 
     checkWishlistStatus();
-    incrementViews();
+    // incrementViews();
   }, [user, product]);
 
   const handleWishlist = async () => {
