@@ -3,7 +3,7 @@ import ProductDetailClient from './ProductDetailClient';
 import LoadingSpinner from '@/app/components/LoadingSpinner/LoadingSpinner';
 
 async function getProduct(id: string) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_FRONTEND_URL}/api/products/${id}`);
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}}/api/products/${id}`);
   if (!res.ok) throw new Error('Failed to fetch product');
   return res.json();
 }
