@@ -51,6 +51,8 @@ export class ProductsController {
     @Query('minRating') minRating: number,
     @Query('categories') categories: string,
     @Query('sortBy') sortBy: string,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
   ) {
     let categoryIds: Types.ObjectId[] = [];
 
@@ -69,6 +71,8 @@ export class ProductsController {
       minRating: Number(minRating),
       categories: categoryIds, // ارسال ObjectId[]
       sortBy,
+      page,
+      limit
     });
   }
 
