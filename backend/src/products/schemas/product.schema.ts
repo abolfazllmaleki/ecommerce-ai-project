@@ -1,5 +1,5 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class Product extends Document {
@@ -9,8 +9,8 @@ export class Product extends Document {
   @Prop({ index: 'text' })
   description: string;
 
-  @Prop({ required: true })
-  category: string;
+  @Prop({ type: Types.ObjectId, ref: 'Category', required: true })
+  categoryId: Types.ObjectId;
 
   @Prop({ type: [String], default: [] })
   tags: string[];
@@ -26,7 +26,8 @@ export class Product extends Document {
 
   @Prop({ type: [String], default: [] })
   colors: string[];
-  @Prop()
+  
+  @Prop({ type: [String], default: [] })
   sizes: string[];
 
   @Prop({ default: 0 })
@@ -41,8 +42,8 @@ export class Product extends Document {
   @Prop({ default: 0 })
   views: number;
 
-  // @Prop({ default: 0 })
-  // purchases: number;
+  @Prop({ default: 0 })
+  purchases: number;
 
   @Prop({ default: 0 })
   wishlistAdds: number;
@@ -50,21 +51,28 @@ export class Product extends Document {
   @Prop({ default: 0 })
   discount: number;
 
-  // @Prop({ type: [String], default: [] })
-  // similarProducts: string[];
+  @Prop({ type: [String], default: [] })
+  similarProducts: string[];
 
-  // @Prop({ type: Map, of: Number, default: {} })
-  // featureWeights: Map<string, number>;
+  @Prop({ type: Map, of: Number, default: {} })
+  featureWeights: Map<string, number>;
 
-  // @Prop({ type: [String], default: [] })
-  // userFeedbackKeywords: string[];
+  @Prop({ type: [String], default: [] })
+  userFeedbackKeywords: string[];
 
-  // @Prop({ default: false })
-  // isFeatured: boolean;
+  @Prop({ default: false })
+  isFeatured: boolean;
 
-  // @Prop({ default: new Date() })
-  // lastUpdated: Date;
+  @Prop({ default: new Date() })
+  lastUpdated: Date;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
-ProductSchema.index({ name: 'text', description: 'text' });
+
+// Create text index for search functionality
+ProductSchema.index({ name: 'text', description: 'text', tags: 'text' });
+
+// Create compound index for better performance
+ProductSchema.index({ categoryId: 1, price: 1, rating: 1 });
+ProductSchema.index({ price: 1, rating: 1 });
+ProductSchema.index({ views: -1, purchases: -1 });

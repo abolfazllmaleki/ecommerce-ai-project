@@ -100,32 +100,44 @@ export class ProductsService {
     minRating?: number;
     categories?: Types.ObjectId[];
     sortBy?: string;
-    page:number,
-    limit:number
+    page: number;
+    limit: number;
   }): Promise<Product[]> {
     try {
-      const { query, minPrice, maxPrice, minRating, categories, sortBy ,page,limit } =
+      const { query, minPrice, maxPrice, minRating, categories, sortBy, page, limit } =
         filters;
 
       const queryConditions: any = {};
 
-      if (query) {
-        queryConditions.$text = { $search: query };
+      // Handle text search
+      if (query && query.trim()) {
+        // Use regex for more flexible text search
+        queryConditions.$or = [
+          { name: { $regex: query, $options: 'i' } },
+          { description: { $regex: query, $options: 'i' } },
+          { tags: { $in: [new RegExp(query, 'i')] } },
+          { brand: { $regex: query, $options: 'i' } }
+        ];
       }
+
+      // Handle price range
       if (minPrice !== undefined || maxPrice !== undefined) {
         queryConditions.price = {};
         if (minPrice !== undefined) queryConditions.price.$gte = minPrice;
         if (maxPrice !== undefined) queryConditions.price.$lte = maxPrice;
       }
 
-      if (minRating) {
+      // Handle rating filter
+      if (minRating && minRating > 0) {
         queryConditions.rating = { $gte: minRating };
       }
 
+      // Handle category filter
       if (categories && categories.length > 0) {
         queryConditions.categoryId = { $in: categories };
       }
 
+      // Handle sorting
       let sortOptions: any = { createdAt: -1 };
       if (sortBy) {
         switch (sortBy) {
@@ -139,22 +151,36 @@ export class ProductsService {
             sortOptions = { rating: -1 };
             break;
           case 'popularity':
-            sortOptions = { views: -1 };
+            sortOptions = { views: -1, purchases: -1 };
             break;
+          case 'newest':
+            sortOptions = { createdAt: -1 };
+            break;
+          default:
+            sortOptions = { createdAt: -1 };
         }
-      } else if (query) {
-        sortOptions = { score: { $meta: 'textScore' } };
       }
+
+      // Calculate pagination
       const skip = (page - 1) * limit;
 
-      return this.productModel
+      console.log('Search query conditions:', queryConditions);
+      console.log('Sort options:', sortOptions);
+      console.log('Pagination:', { page, limit, skip });
+
+      const results = await this.productModel
         .find(queryConditions)
         .sort(sortOptions)
         .skip(skip)
         .limit(limit)
+        .populate('categoryId', 'name')
         .select('-__v')
         .exec();
+
+      console.log(`Found ${results.length} products`);
+      return results;
     } catch (error) {
+      console.error('Search error:', error);
       throw new Error(`Search error: ${error.message}`);
     }
   }

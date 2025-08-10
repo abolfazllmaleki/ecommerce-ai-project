@@ -9,4 +9,20 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
+
+  @Get('health')
+  getHealth(): { status: string; timestamp: string } {
+    return {
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Get('test')
+  getTest(): { message: string; backend: string } {
+    return {
+      message: 'Backend is working!',
+      backend: 'NestJS + MongoDB',
+    };
+  }
 }

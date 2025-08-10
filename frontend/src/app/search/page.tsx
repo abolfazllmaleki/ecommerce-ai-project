@@ -10,6 +10,7 @@ import { CategoryFilter } from "../components/CategoryFilter/CategoryFilter";
 import { ProductList } from "../components/ProductList/ProductList";
 import { productService } from "@/services/api";
 import { FiFilter, FiX, FiLoader } from "react-icons/fi";
+import { useCallback } from "react";
 
 const SearchComponent = () => {
   const searchParams = useSearchParams();
@@ -25,14 +26,34 @@ const SearchComponent = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   useEffect(() => {
     const query = searchParams.get("query") || "";
     setSearchQuery(query);
+    console.log('Initial search query from URL:', query);
   }, [searchParams]);
+
+  // Separate effect for initial data loading
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        setLoading(true);
+        const categoriesData = await productService.getCategories();
+        setCategories(categoriesData || []);
+        console.log('Initial categories loaded:', categoriesData);
+      } catch (err) {
+        console.error('Error loading initial categories:', err);
+        setError("Error loading categories");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadInitialData();
+  }, []); // Only run once on mount
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,6 +61,18 @@ const SearchComponent = () => {
         setLoading(true);
         setPage(1);
         setHasMore(true);
+        
+        console.log('Fetching data with params:', {
+          query: searchQuery,
+          minPrice: priceRange[0],
+          maxPrice: priceRange[1],
+          minRating,
+          categories: selectedCategories,
+          sortBy,
+          page: 1,
+          limit: 20,
+        });
+
         const [productsData, categoriesData] = await Promise.all([
           productService.searchProducts({
             query: searchQuery,
@@ -53,58 +86,105 @@ const SearchComponent = () => {
           }),
           productService.getCategories(),
         ]);
-        setProducts(productsData);
-        setCategories(categoriesData);
+        
+        console.log('Products data:', productsData);
+        console.log('Categories data:', categoriesData);
+        
+        setProducts(productsData || []);
+        setCategories(categoriesData || []);
         setError("");
       } catch (err) {
-        setError("Error fetching products");
+        console.error('Search error:', err);
+        setError("Error fetching products: " + (err.message || 'Unknown error'));
         setProducts([]);
       } finally {
         setLoading(false);
       }
     };
 
-    const debounceTimer = setTimeout(() => {
-      fetchData();
-    }, 500);
+    // Only search if there's a query or filters are applied
+    if (searchQuery.trim() || selectedCategories.length > 0 || minRating > 0 || priceRange[0] > 0 || priceRange[1] < 10000) {
+      const debounceTimer = setTimeout(() => {
+        fetchData();
+      }, 500); // Reduced debounce time for better UX
 
-    return () => clearTimeout(debounceTimer);
+      return () => clearTimeout(debounceTimer);
+    } else {
+      // If no search query and no filters, show all products
+      const fetchAllProducts = async () => {
+        try {
+          setLoading(true);
+          const [productsData, categoriesData] = await Promise.all([
+            productService.searchProducts({
+              query: '',
+              page: 1,
+              limit: 20,
+            }),
+            productService.getCategories(),
+          ]);
+          
+          setProducts(productsData || []);
+          setCategories(categoriesData || []);
+          setError("");
+        } catch (err) {
+          console.error('Fetch all products error:', err);
+          setError("Error fetching products");
+          setProducts([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchAllProducts();
+    }
   }, [searchQuery, priceRange, minRating, selectedCategories, sortBy]);
 
-  const toggleCategory = (categoryId: string) => {
-    setSelectedCategories(prev =>
-      prev.includes(categoryId)
-        ? prev.filter(id => id !== categoryId)
-        : [...prev, categoryId]
-    );
-  };
+  // const toggleCategory = (categoryId: string) => {
+  //   console.log("catid",categoryId)
+  //   setSelectedCategories(prev =>
+  //     prev.includes(categoryId)
+  //       ? prev.filter(id => id !== categoryId)
+  //       : [...prev, categoryId]
+  //   );
+  // };
+  const toggleCategory = useCallback((categoryId: string) => {
+  setSelectedCategories(prev =>
+    prev.includes(categoryId)
+      ? prev.filter(id => id !== categoryId)
+      : [...prev, categoryId]
+  );
+}, []);
 
-  const loadMoreProducts = async () => {
-    setIsLoadingMore(true);
-    try {
-      const moreProducts = await productService.searchProducts({
-        query: searchQuery,
-        minPrice: priceRange[0],
-        maxPrice: priceRange[1],
-        minRating,
-        categories: selectedCategories,
-        sortBy,
-        page: page + 1,
-        limit: 20,
-      });
+  // const loadMoreProducts = async () => {
+  //   setIsLoadingMore(true);
+    
+  //   try {
+  //     const moreProducts = await productService.searchProducts({
+  //       query: searchQuery,
+  //       minPrice: priceRange[0],
+  //       maxPrice: priceRange[1],
+  //       minRating,
+  //       categories: selectedCategories,
+  //       sortBy,
+  //       page: page + 1,
+  //       limit: 20,
+  //     });
+  //     console.log("Requesting page:", page + 1);
+  //     console.log(moreProducts)
 
-      if (moreProducts.length === 0) {
-        setHasMore(false);
-      } else {
-        setProducts(prev => [...prev, ...moreProducts]);
-        setPage(prev => prev + 1);
-      }
-    } catch (err) {
-      setError("Error loading more products.");
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
+
+  //     if (moreProducts.length === 0) {
+  //       setHasMore(false);
+  //     } else {
+  //       setProducts(prev => [...prev, ...moreProducts]);
+  //       setPage(prev => prev + 1);
+  //     }
+  //   } catch (err) {
+  //     setError("Error loading more products.");
+  //   } finally {
+  //     setIsLoadingMore(false);
+  //   }
+  // };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -112,9 +192,9 @@ const SearchComponent = () => {
       const windowHeight = window.innerHeight;
       const fullHeight = document.body.scrollHeight;
 
-      if (scrollTop + windowHeight >= fullHeight - 300 && !isLoadingMore && hasMore) {
-        loadMoreProducts();
-      }
+      // if (scrollTop + windowHeight >= fullHeight - 300 && !isLoadingMore && hasMore) {
+      //   loadMoreProducts();
+      // }
     };
 
     window.addEventListener("scroll", handleScroll);

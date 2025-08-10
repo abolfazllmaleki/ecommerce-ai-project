@@ -45,35 +45,89 @@ export class ProductsController {
   }
   @Get('search')
   async search(
-    @Query('q') query: string,
-    @Query('minPrice') minPrice: number,
-    @Query('maxPrice') maxPrice: number,
-    @Query('minRating') minRating: number,
-    @Query('categories') categories: string,
-    @Query('sortBy') sortBy: string,
-    @Query('page') page: number,
-    @Query('limit') limit: number,
+    @Query('q') query?: string,
+    @Query('minPrice') minPrice?: string,
+    @Query('maxPrice') maxPrice?: string,
+    @Query('minRating') minRating?: string,
+    @Query('categories') categories?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    let categoryIds: Types.ObjectId[] = [];
+    try {
+      let categoryIds: Types.ObjectId[] = [];
 
-    if (categories) {
-      try {
-        categoryIds = categories.split(',').map((id) => new Types.ObjectId(id));
-      } catch (e) {
-        throw new BadRequestException('Invalid category ID format');
+      // Parse and validate categories
+      if (categories && categories.trim()) {
+        try {
+          categoryIds = categories.split(',').map((id) => new Types.ObjectId(id.trim()));
+        } catch (e) {
+          throw new BadRequestException('Invalid category ID format');
+        }
       }
-    }
 
-    return this.productsService.searchProducts({
-      query,
-      minPrice: Number(minPrice),
-      maxPrice: Number(maxPrice),
-      minRating: Number(minRating),
-      categories: categoryIds, // ارسال ObjectId[]
-      sortBy,
-      page,
-      limit
-    });
+      // Parse and validate numeric parameters
+      const parsedMinPrice = minPrice ? Number(minPrice) : undefined;
+      const parsedMaxPrice = maxPrice ? Number(maxPrice) : undefined;
+      const parsedMinRating = minRating ? Number(minRating) : undefined;
+      const parsedPage = page ? Number(page) : 1;
+      const parsedLimit = limit ? Number(limit) : 20;
+
+      // Validate numeric values
+      if (parsedMinPrice !== undefined && isNaN(parsedMinPrice)) {
+        throw new BadRequestException('Invalid minPrice value');
+      }
+      if (parsedMaxPrice !== undefined && isNaN(parsedMaxPrice)) {
+        throw new BadRequestException('Invalid maxPrice value');
+      }
+      if (parsedMinRating !== undefined && isNaN(parsedMinRating)) {
+        throw new BadRequestException('Invalid minRating value');
+      }
+      if (parsedPage < 1) {
+        throw new BadRequestException('Page must be greater than 0');
+      }
+      if (parsedLimit < 1 || parsedLimit > 100) {
+        throw new BadRequestException('Limit must be between 1 and 100');
+      }
+
+      console.log('Search request:', {
+        query,
+        minPrice: parsedMinPrice,
+        maxPrice: parsedMaxPrice,
+        minRating: parsedMinRating,
+        categories: categoryIds,
+        sortBy,
+        page: parsedPage,
+        limit: parsedLimit
+      });
+
+      const results = await this.productsService.searchProducts({
+        query,
+        minPrice: parsedMinPrice,
+        maxPrice: parsedMaxPrice,
+        minRating: parsedMinRating,
+        categories: categoryIds,
+        sortBy,
+        page: parsedPage,
+        limit: parsedLimit
+      });
+
+      return {
+        products: results,
+        pagination: {
+          page: parsedPage,
+          limit: parsedLimit,
+          total: results.length,
+          hasMore: results.length === parsedLimit
+        }
+      };
+    } catch (error) {
+      console.error('Search controller error:', error);
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Search failed: ' + error.message);
+    }
   }
 
   @Get(':id')

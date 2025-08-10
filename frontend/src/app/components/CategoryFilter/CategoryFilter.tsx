@@ -37,6 +37,7 @@
 import { motion } from 'framer-motion';
 import { FiCheck } from 'react-icons/fi';
 import { Category } from "@/app/types/types";
+import { memo } from 'react';
 
 interface CategoryFilterProps {
   categories: Category[];
@@ -44,42 +45,53 @@ interface CategoryFilterProps {
   toggleCategory: (categoryId: string) => void;
 }
 
-export const CategoryFilter = ({
+const CategoryFilterComponent = ({
   categories,
   selectedCategories,
   toggleCategory,
-}: CategoryFilterProps) => (
-  <motion.div 
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="bg-white p-6 rounded-xl shadow-sm border border-gray-100"
-  >
-    <h3 className="font-medium mb-4 text-gray-700">Categories</h3>
-    <div className="space-y-2">
-      {categories.map((category) => (
-        <motion.label
-          key={category._id}
-          whileHover={{ x: 5 }}
-          className={`flex items-center justify-between cursor-pointer p-3 rounded-lg transition-colors ${
-            selectedCategories.includes(category._id)
-              ? 'bg-red-50 border border-red-200'
-              : 'hover:bg-gray-50'
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <div className={`w-5 h-5 rounded border flex items-center justify-center ${
-              selectedCategories.includes(category._id)
-                ? 'bg-red-500 border-red-500'
-                : 'border-gray-300'
-            }`}>
-              {selectedCategories.includes(category._id) && (
-                <FiCheck className="text-white text-xs" />
-              )}
-            </div>
-            <span className="text-gray-700">{category.name}</span>
-          </div>
-        </motion.label>
-      ))}
-    </div>
-  </motion.div>
-);
+}: CategoryFilterProps) => {
+  console.log('CategoryFilter render:', { categories, selectedCategories });
+  
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white p-6 rounded-xl shadow-sm border border-gray-100"
+    >
+      <h3 className="font-medium mb-4 text-gray-700">Categories</h3>
+      <div className="space-y-2">
+        {categories && categories.length > 0 ? (
+          categories.map((category) => (
+            <motion.label
+              key={category._id}
+              whileHover={{ x: 5 }}
+              onClick={() => toggleCategory(category._id)}
+              className={`flex items-center justify-between cursor-pointer p-3 rounded-lg transition-colors ${
+                selectedCategories.includes(category._id)
+                  ? 'bg-red-50 border border-red-200'
+                  : 'hover:bg-gray-50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-5 h-5 rounded border flex items-center justify-center ${
+                  selectedCategories.includes(category._id)
+                    ? 'bg-red-500 border-red-500'
+                    : 'border-gray-300'
+                }`}>
+                  {selectedCategories.includes(category._id) && (
+                    <FiCheck className="text-white text-xs" />
+                  )}
+                </div>
+                <span className="text-gray-700">{category.name}</span>
+              </div>
+            </motion.label>
+          ))
+        ) : (
+          <div className="text-gray-500 text-sm py-2">No categories available</div>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
+export const CategoryFilter = memo(CategoryFilterComponent);
