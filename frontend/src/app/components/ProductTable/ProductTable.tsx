@@ -81,7 +81,7 @@ const ProductTable = ({ products, onUpdate, onDelete }: ProductTableProps) => {
                   </td>
                   <td className="p-4">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {product?.categoryId?.name} 
+                      {product?.category?.name} 
                     </span>
                   </td>
                   <td className="p-4">
@@ -285,7 +285,7 @@ const ProductTable = ({ products, onUpdate, onDelete }: ProductTableProps) => {
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                               <select
-                                value={editingProduct.categoryId}
+                                value={editingProduct.category}
                                 onChange={(e) => setEditingProduct(p => p ? { ...p, category: e.target.value } : null)}
                                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                               >

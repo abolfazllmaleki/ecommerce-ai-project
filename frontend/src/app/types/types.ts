@@ -1,16 +1,18 @@
 // types.ts
-// export const CATEGORIES = [
-//   "Phone",
-//   "Computer",
-//   "Camera",
-//   "Tablet",
-//   "Accessories",
-//   "Audio",
-//   "Wearables",
-// ];
+export const CATEGORIES = [
+  "Phone",
+  "Computer",
+  "Camera",
+  "Tablet",
+  "Accessories",
+  "Audio",
+  "Wearables",
+];
 export interface Category {
   _id: string;
   name: string;
+  icon?:any;
+  href?:any;
 }
 
 
