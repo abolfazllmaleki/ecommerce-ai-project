@@ -1,0 +1,14 @@
+{
+  "Navigation": {
+    "home": "Home",
+    "products": "Products",
+    "about": "About",
+    "contact": "Contact",
+    "search": "Search..."
+  },
+  "Common": {
+    "account": "Account",
+    "signIn": "Sign In",
+    "cart": "Cart"
+  }
+}

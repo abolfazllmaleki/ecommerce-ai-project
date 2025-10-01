@@ -1,19 +1,21 @@
 'use client';
 import { useState } from 'react';
 import { Tab } from '@headlessui/react';
-import { FiBox, FiUsers, FiSettings, FiPieChart } from 'react-icons/fi';
+import { FiBox, FiUsers, FiSettings, FiPieChart ,FiShoppingBag } from 'react-icons/fi';
 import ProductManagement from '../components/ProductManagement/ProductManagement';
 import UserManagement from '../components/UserManagement/UserManagement';
+import OrdersManagement from '../components/OrdersManagement/OrdersManagement';
 
 const ManagerPage = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const tabs = [
-    { name: 'Products', icon: <FiBox className="mr-2" /> },
-    { name: 'Users', icon: <FiUsers className="mr-2" /> },
-    { name: 'Analytics', icon: <FiPieChart className="mr-2" /> },
-    { name: 'Settings', icon: <FiSettings className="mr-2" /> }
-  ];
+const tabs = [
+  { name: 'Orders', icon: <FiShoppingBag className="mr-2" /> },
+  { name: 'Products', icon: <FiBox className="mr-2" /> },
+  { name: 'Users', icon: <FiUsers className="mr-2" /> },
+  { name: 'Analytics', icon: <FiPieChart className="mr-2" /> },
+  { name: 'Settings', icon: <FiSettings className="mr-2" /> }
+];
 
   return (
     <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
@@ -58,6 +60,9 @@ const ManagerPage = () => {
 
             {/* Tab Panels with Subtle Animation */}
             <Tab.Panels className="transition-all duration-300">
+              <Tab.Panel className="p-6">
+                <OrdersManagement/>
+              </Tab.Panel>
               <Tab.Panel className="p-6">
                 <ProductManagement />
               </Tab.Panel>

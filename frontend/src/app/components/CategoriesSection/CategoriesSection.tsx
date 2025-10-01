@@ -4,12 +4,12 @@ import {Category} from '../../types/types'
 
 const CategoriesSection = () => {
   const categories: Category[] = [
-    { _id: 1, name: "Phones", icon: <FaPhone className="w-6 h-6" />, href: "/category/phones" },
-    { _id: 2, name: "Computers", icon: <FaLaptop className="w-6 h-6" />, href: "/category/computers" },
-    { _id: 3, name: "SmartWatch", icon: <FaClock className="w-6 h-6" />, href: "/category/smartwatch" },
-    { _id: 4, name: "Camera", icon: <FaCamera className="w-6 h-6" />, href: "/category/camera" },
-    { _id: 5, name: "HeadPhones", icon: <FaHeadphones className="w-6 h-6" />, href: "/category/headphones" },
-    { _id: 6, name: "Gaming", icon: <FaGamepad className="w-6 h-6" />, href: "/category/gaming" },
+    { _id: 1, name: "Phones", icon: <FaPhone className="w-6 h-6" />, href: "/search?Categorie=phone" },
+    { _id: 2, name: "Computers", icon: <FaLaptop className="w-6 h-6" />, href: "/search" },
+    { _id: 3, name: "SmartWatch", icon: <FaClock className="w-6 h-6" />, href: "/search" },
+    { _id: 4, name: "Camera", icon: <FaCamera className="w-6 h-6" />, href: "/search" },
+    { _id: 5, name: "HeadPhones", icon: <FaHeadphones className="w-6 h-6" />, href: "/search" },
+    { _id: 6, name: "Gaming", icon: <FaGamepad className="w-6 h-6" />, href: "/search" },
   ];
 
   return (

@@ -1,0 +1,14 @@
+{
+  "Navigation": {
+    "home": "خانه",
+    "products": "محصولات",
+    "about": "درباره ما",
+    "contact": "تماس با ما",
+    "search": "جستجو..."
+  },
+  "Common": {
+    "account": "حساب کاربری",
+    "signIn": "ورود",
+    "cart": "سبد خرید"
+  }
+}

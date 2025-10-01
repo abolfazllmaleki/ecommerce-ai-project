@@ -10,6 +10,7 @@ import ImageGallery from '@/app/components/ImageGallery/ImageGallery';
 import { useAuth } from '@/app/context/AuthContext';
 import { useCart } from '@/app/context/CartContext';
 import LoadingSpinner from '@/app/components/LoadingSpinner/LoadingSpinner';
+import ProductDescription from '@/app/components/productDescription/ProductDescription';
 
 interface Product {
   _id: string;
@@ -20,12 +21,15 @@ interface Product {
   colors: string[];
   sizes: string[];
   rating: number;
-  reviewsCount: number;
+  tags:string[];
+  numberOfReviews: number;
   stock: number;
-  category: string;
-  sku: string;
+  categoryId: any;
+  adminNote: string;
+  brand: string;
   discount?: number;
   originalPrice?: number;
+  details?: Array<{key: string, value: string}>;
 }
 
 export default function ProductDetailClient({ initialProduct }: { initialProduct: Product }) {
@@ -39,6 +43,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   const [loading, setLoading] = useState(false);
   const { user, updateUser } = useAuth();
   const { addToCart } = useCart();
+  console.log(initialProduct)
 
   const showError = (message: string) => {
     setError(message);
@@ -138,16 +143,16 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Success/Error Toasts */}
       {error && (
-        <div className="animate-fade-in-up bg-red-50 border-l-4 border-red-500 p-4 rounded-lg flex items-start gap-3 shadow-lg mb-6">
+        <div className="animate-fade-in-up bg-red-50 border-l-4 border-red-500 p-3 rounded-lg flex items-start gap-2 shadow-md mb-4">
           <div className="flex-1">
-            <p className="text-red-700 font-medium">{error}</p>
+            <p className="text-red-700 text-sm font-medium">{error}</p>
           </div>
           <button 
             onClick={() => setError(null)}
-            className="text-red-500 hover:text-red-700"
+            className="text-red-500 hover:text-red-700 text-lg"
           >
             &times;
           </button>
@@ -155,35 +160,35 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
       )}
 
       {success && (
-        <div className="animate-fade-in-up bg-green-50 border-l-4 border-green-500 p-4 rounded-lg flex items-start gap-3 shadow-lg mb-6">
+        <div className="animate-fade-in-up bg-green-50 border-l-4 border-green-500 p-3 rounded-lg flex items-start gap-2 shadow-md mb-4">
           <div className="flex-1">
-            <p className="text-green-700 font-medium">{success}</p>
+            <p className="text-green-700 text-sm font-medium">{success}</p>
           </div>
           <button 
             onClick={() => setSuccess(null)}
-            className="text-green-500 hover:text-green-700"
+            className="text-green-500 hover:text-green-700 text-lg"
           >
             &times;
           </button>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Image Gallery */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 relative">
-          <ImageGallery images={product.images} />
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+          <ImageGallery images={product.images}  productName={product.name} />
         </div>
 
         {/* Product Details */}
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Product Header */}
           <div className="pb-2 border-b border-gray-100">
-            <span className="text-sm font-medium text-red-500 bg-red-50 px-3 py-1 rounded-full">
-              {product.category}
+            <span className="text-xs font-medium text-red-500 bg-red-50 px-2 py-1 rounded-full">
+              {product.categoryId.name}
             </span>
-            <h1 className="text-4xl font-bold text-gray-900 mt-3">{product.name}</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mt-2">{product.name}</h1>
             
-            <div className="flex items-center gap-4 mt-4">
+            <div className="flex items-center gap-3 mt-3">
               <div className="flex items-center">
                 <StarRating
                   userId={user?._id || ''}
@@ -191,9 +196,9 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                   initialRating={product.rating}
                   onRatingUpdate={(newRating) => setProduct({ ...product, rating: newRating })}
                 />
-                <span className="ml-2 text-gray-500 text-sm">({product.reviewsCount})</span>
+                <span className="ml-1.5 text-gray-500 text-xs">({product.numberOfReviews})</span>
               </div>
-              <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
                 product.stock > 0 
                   ? 'bg-green-100 text-green-800' 
                   : 'bg-gray-100 text-gray-800'
@@ -203,37 +208,54 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
             </div>
           </div>
 
+
           {/* Price Section */}
-          <div className="py-4 border-b border-gray-100">
-            <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-bold text-gray-900">
+
+      <div className="py-3 border-b border-gray-100">
+        <div className="flex items-baseline gap-2">
+          {product.discount && product.discount > 0 ? (
+            <>
+              {/* Original price calculated from discount */}
+              <span className="text-lg text-gray-400 line-through">
+                ${((product.price * 100) / (100 - product.discount)).toFixed(2)}
+              </span>
+              {/* Discounted price */}
+              <span className="text-2xl font-bold text-gray-900">
                 ${product.price.toFixed(2)}
               </span>
-              {product.discount && (
-                <>
-                  <span className="text-xl text-gray-400 line-through">
-                    ${product.originalPrice?.toFixed(2)}
-                  </span>
-                  <span className="ml-2 bg-red-100 text-red-600 px-2 py-1 rounded text-sm font-bold">
-                    {product.discount}% OFF
-                  </span>
-                </>
-              )}
-            </div>
-            <p className="text-green-600 text-sm mt-1 flex items-center gap-1">
-              <FaTruck className="text-gray-400" />
-              Free shipping on orders over $50
+              {/* Discount badge */}
+              <span className="ml-1.5 bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-xs font-bold">
+                {product.discount}% OFF
+              </span>
+            </>
+          ) : (
+            <span className="text-2xl font-bold text-gray-900">
+              ${product.price.toFixed(2)}
+            </span>
+          )}
+        </div>
+
+        {product.adminNote && (
+          <p className="text-green-600 text-xs mt-1 flex items-center gap-1">
+            <FaTruck className="text-gray-400 text-xs" />
+            {product.adminNote}
+          </p>
+        )}
+      </div>
+
+
+          <div className="mt-4">
+            <p className="text-gray-600 text-sm leading-relaxed">
+              {product.description
+                .split(' ')
+                .slice(0, 60)
+                .join(' ')}
+              {product.description.split(' ').length > 60 && '...'}
             </p>
           </div>
 
-          {/* Description */}
-          <div className="prose max-w-none text-gray-600">
-            <p>{product.description}</p>
-          </div>
-
           {/* Color Picker */}
-          <div className="pt-2">
-            <h3 className="text-sm font-medium text-gray-900 mb-3">Color</h3>
+          <div className="pt-1">
             <DynamicColor
               colors={product.colors}
               selectedColor={selectedColor}
@@ -242,8 +264,8 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           </div>
 
           {/* Size Picker */}
-          <div className="pt-2">
-            <h3 className="text-sm font-medium text-gray-900 mb-3">Size</h3>
+          <div className="pt-1">
+            <h3 className="text-xs font-medium text-gray-900 mb-2">Size</h3>
             <DynamicSize
               sizes={product.sizes}
               selectedSize={selectedSize}
@@ -252,22 +274,21 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           </div>
 
           {/* Quantity and Add to Cart */}
-          <div className="pt-4">
-            <div className="flex items-center gap-4">
-              <DynamicCounter 
-              />
+          <div className="pt-3">
+            <div className="flex items-center gap-3">
+              <DynamicCounter />
               <button
                 onClick={handleAddToCart}
                 disabled={product.stock <= 0 || loading}
-                className={`flex-1 px-6 py-4 rounded-xl font-bold text-white transition-all duration-300 ${
+                className={`flex-1 px-5 py-3 rounded-lg font-bold text-white transition-all duration-300 ${
                   product.stock > 0 && !loading
-                    ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-xl'
+                    ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-md hover:shadow-lg'
                     : 'bg-gray-400 cursor-not-allowed'
                 }`}
               >
                 {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <LoadingSpinner/>
+                  <span className="flex items-center justify-center gap-1.5 text-sm">
+                    <LoadingSpinner />
                     Adding...
                   </span>
                 ) : product.stock > 0 ? (
@@ -278,45 +299,78 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               </button>
               <button
                 onClick={handleWishlist}
-                className={`p-4 rounded-full border transition-all duration-300 ${
+                className={`p-3 rounded-full border transition-all duration-300 ${
                   isFavorite
                     ? 'bg-red-50 border-red-100 text-red-500'
                     : 'border-gray-200 hover:bg-gray-50 text-gray-400'
                 }`}
               >
-                <FaHeart className={isFavorite ? 'fill-current' : ''} />
+                <FaHeart className={isFavorite ? 'fill-current text-sm' : 'text-sm'} />
               </button>
             </div>
           </div>
 
-          {/* Trust Badges */}
-          <div className="grid grid-cols-2 gap-3 pt-6">
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <FaShieldAlt className="text-gray-500 flex-shrink-0" />
-              <span className="text-sm text-gray-600">1-Year Warranty</span>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <FaRedoAlt className="text-gray-500 flex-shrink-0" />
-              <span className="text-sm text-gray-600">30-Day Returns</span>
-            </div>
-          </div>
+
+<div className="pt-4">
+  <p className="text-gray-500 font-semibold mb-2">Tags:</p>
+  <div className="flex flex-wrap gap-2">
+    {product.tags.map((tag, index) => (
+      <span
+        key={index}
+        className="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-700 text-sm font-medium rounded-full hover:bg-gray-200 transition-colors"
+      >
+        {tag}
+      </span>
+    ))}
+  </div>
+</div>
+
+
 
           {/* Product Details */}
-          <div className="pt-6">
-            <h3 className="text-sm font-medium text-gray-900 mb-3">Product Details</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="pt-4">
+            <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
-                <p className="text-gray-500">SKU</p>
-                <p className="font-medium">{product.sku}</p>
+                <p className="text-gray-500">Brand:</p>
+                <p className="font-medium">{product.brand}</p>
               </div>
               <div>
-                <p className="text-gray-500">Category</p>
-                <p className="font-medium capitalize">{product.category}</p>
+                <p className="text-gray-500">Category:</p>
+                <p className="font-medium capitalize">{product?.categoryId?.name}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+ 
+      <ProductDescription 
+  description={product.description} 
+  details={product.details} 
+/>
+
+      {/* Product Specifications/Details Table */}
+      {product.details && product.details.length > 0 && (
+        <div className="mt-6 bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Specifications</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-100">
+                {product.details.map((detail, index) => (
+                  <tr key={index}>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 bg-gray-50">
+                      {detail.key}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {detail.value}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Custom Animation CSS */}
       <style jsx>{`

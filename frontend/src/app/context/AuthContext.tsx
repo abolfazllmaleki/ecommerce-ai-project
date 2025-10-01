@@ -5,6 +5,7 @@ interface User {
   _id: string;
   name: string;
   email: string;
+   role: string;
   wishList?: any[]; // اضافه کردن فیلدهای ضروری
 }
 
@@ -27,28 +28,49 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
+  // const fetchUser = async (token: string) => {
+  //   try {
+  //     const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`, {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
+
+  //     if (!response.ok) {
+  //       console.log("Response status:", response.status);
+  //       localStorage.removeItem("token");
+  //       setToken(null);
+  //       setUser(null);
+  //       return;
+  //     }
+
+  //     const userData: User = await response.json();
+  //     setUser(userData);
+  //   } catch (error) {
+  //     console.error("Failed to fetch user:", error);
+  //     logout();
+  //   }
+  // };
+
   const fetchUser = async (token: string) => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-      if (!response.ok) {
-        console.log("Response status:", response.status);
-        localStorage.removeItem("token");
-        setToken(null);
-        setUser(null);
-        return;
-      }
-
-      const userData: User = await response.json();
-      setUser(userData);
-    } catch (error) {
-      console.error("Failed to fetch user:", error);
-      logout();
+    if (!response.ok) {
+      console.log("Response status:", response.status);
+      localStorage.removeItem("token");
+      setToken(null);
+      setUser(null);
+      return;
     }
-  };
 
+    const userData: User = await response.json();
+    setUser(userData);
+  } catch (error) {
+    console.error("Failed to fetch user:", error);
+    logout();
+  }
+};
   const login = (token: string) => {
     localStorage.setItem("token", token);
     setToken(token);

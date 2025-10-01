@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FiPlus, FiRefreshCw, FiTrash2, FiEdit2, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
+import { FiPlus, FiRefreshCw, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
 import { Product } from '../../types/types';
 import ProductForm from '../ProductForm/ProductForm';
 import ProductTable from '../ProductTable/ProductTable';
@@ -27,7 +27,7 @@ const ProductManagement = () => {
       
       setStats({
         total: response.data.length,
-        active: response.data.filter(p => p.stock).length,
+        active: response.data.filter(p => p.stock > 0).length,
         outOfStock: response.data.filter(p => p.stock === 0).length
       });
       
@@ -53,28 +53,62 @@ const ProductManagement = () => {
     fetchProducts();
   }, []);
 
-  const handleAddProduct = async (newProduct: Product) => {
-    try {
-      const response = await axios.post<Product>(API_URL, newProduct);
-      setProducts(prev => [...prev, response.data]);
-      showSuccess('Product added successfully');
-    } catch (err) {
-      showError('Failed to add product');
-    }
-  };
+  // const handleAddProduct = async (newProduct: Product) => {
+  //   try {
+  //     const response = await axios.post<Product>(API_URL, newProduct);
+  //     setProducts(prev => [...prev, response.data]);
+  //     showSuccess('Product added successfully');
+  //   } catch (err) {
+  //     showError('Failed to add product');
+  //   }
+  // };
 
-  const handleUpdateProduct = async (updatedProduct: Product) => {
-    try {
-      const response = await axios.put<Product>(
-        `${API_URL}/${updatedProduct._id}`,
-        updatedProduct
-      );
-      setProducts(prev => prev.map(p => p._id === updatedProduct._id ? response.data : p));
-      showSuccess('Product updated successfully');
-    } catch (err) {
-      showError('Failed to update product');
-    }
-  };
+  // const handleUpdateProduct = async (updatedProduct: Product) => {
+  //   try {
+  //     const response = await axios.put<Product>(
+  //       `${API_URL}/${updatedProduct._id}`,
+  //       updatedProduct
+  //     );
+  //     setProducts(prev => prev.map(p => p._id === updatedProduct._id ? response.data : p));
+  //     showSuccess('Product updated successfully');
+  //   } catch (err) {
+  //     showError('Failed to update product');
+  //   }
+  // };
+  const handleAddProduct = async (newProduct: Product) => {
+  try {
+    // Ensure category is sent as object ID string
+    const productToSend = {
+      ...newProduct,
+      category: newProduct.category // This should be the category ID string
+    };
+    
+    const response = await axios.post<Product>(API_URL, productToSend);
+    setProducts(prev => [...prev, response.data]);
+    showSuccess('Product added successfully');
+  } catch (err) {
+    showError('Failed to add product');
+  }
+};
+
+const handleUpdateProduct = async (updatedProduct: Product) => {
+  try {
+    // Ensure category is sent as object ID string
+    const productToSend = {
+      ...updatedProduct,
+      category: updatedProduct.category // This should be the category ID string
+    };
+    
+    const response = await axios.put<Product>(
+      `${API_URL}/${updatedProduct._id}`,
+      productToSend
+    );
+    setProducts(prev => prev.map(p => p._id === updatedProduct._id ? response.data : p));
+    showSuccess('Product updated successfully');
+  } catch (err) {
+    showError('Failed to update product');
+  }
+};
 
   const handleDeleteProduct = async (productId: string) => {
     try {
@@ -88,15 +122,8 @@ const ProductManagement = () => {
 
   return (
     <div className="space-y-6">
-      {/* Dashboard Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          {/* <h1 className="text-3xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
-            Product Dashboard
-          </h1> */}
-          {/* <p className="text-gray-500">Manage your product inventory with ease</p> */}
-        </div>
-        
+        <div></div>
         <div className="flex gap-3">
           <button
             onClick={fetchProducts}
@@ -108,7 +135,6 @@ const ProductManagement = () => {
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-gradient-to-br from-red-50 to-white p-5 rounded-xl border border-red-100 shadow-xs">
           <div className="flex justify-between items-center">
@@ -147,17 +173,13 @@ const ProductManagement = () => {
         </div>
       </div>
 
-      {/* Status Toasts */}
       {error && (
         <div className="animate-fade-in-up bg-red-50 border-l-4 border-red-500 p-4 rounded-lg flex items-start gap-3 shadow-lg">
           <FiAlertCircle className="text-red-500 mt-0.5 flex-shrink-0" />
           <div className="flex-1">
             <p className="text-red-700 font-medium">{error}</p>
           </div>
-          <button 
-            onClick={() => setError(null)}
-            className="text-red-500 hover:text-red-700"
-          >
+          <button onClick={() => setError(null)} className="text-red-500 hover:text-red-700">
             &times;
           </button>
         </div>
@@ -169,18 +191,13 @@ const ProductManagement = () => {
           <div className="flex-1">
             <p className="text-green-700 font-medium">{success}</p>
           </div>
-          <button 
-            onClick={() => setSuccess(null)}
-            className="text-green-500 hover:text-green-700"
-          >
+          <button onClick={() => setSuccess(null)} className="text-green-500 hover:text-green-700">
             &times;
           </button>
         </div>
       )}
 
-      {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Add Product Card */}
         <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="bg-gradient-to-r from-red-50 to-white px-6 py-4 border-b border-gray-200">
             <h3 className="font-semibold text-gray-800 flex items-center gap-2">
@@ -193,7 +210,6 @@ const ProductManagement = () => {
           </div>
         </div>
 
-        {/* Product Table Card */}
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="bg-gradient-to-r from-red-50 to-white px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <h3 className="font-semibold text-gray-800">Product Inventory</h3>
@@ -218,7 +234,6 @@ const ProductManagement = () => {
         </div>
       </div>
 
-      {/* Custom Animation CSS */}
       <style jsx>{`
         @keyframes fadeInUp {
           from {

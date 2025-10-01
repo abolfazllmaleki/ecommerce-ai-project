@@ -1,85 +1,49 @@
 'use client';
 import { useState } from 'react';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
-import DynamicImage from '../DynamicImage/DynamicImage';
 
 interface ImageGalleryProps {
   images: string[];
+  productName: string;
 }
 
-const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
-  const [mainImage, setMainImage] = useState<string>(images[0]);
-  const [direction, setDirection] = useState(0);
-
-  const handleImageChange = (newImage: string) => {
-    const newIndex = images.indexOf(newImage);
-    const currentIndex = images.indexOf(mainImage);
-    setDirection(newIndex > currentIndex ? 1 : -1);
-    setMainImage(newImage);
-  };
-
-  const variants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 100 : -100,
-      opacity: 0
-    }),
-    center: {
-      x: 0,
-      opacity: 1
-    },
-    exit: (direction: number) => ({
-      x: direction < 0 ? 100 : -100,
-      opacity: 0
-    })
-  };
+const ImageGallery: React.FC<ImageGalleryProps> = ({ images, productName }) => {
+  const [activeImage, setActiveImage] = useState(0);
 
   return (
-    <div className="flex flex-col-reverse md:flex-row gap-4 h-full">
+    <div className="flex flex-col">
+      {/* Main Image */}
+      <div className="aspect-square overflow-hidden rounded-2xl bg-gray-100 mb-4">
+        <Image
+          src={images[activeImage]}
+          alt={productName}
+          width={600}
+          height={600}
+          className="w-full h-full object-cover"
+        />
+      </div>
+      
       {/* Thumbnails */}
-      <div className="flex md:flex-col gap-2 overflow-x-auto py-2 md:py-0">
+      <div className="grid grid-cols-4 gap-3">
         {images.map((image, index) => (
-          <motion.div
+          <button
             key={index}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className={`relative w-16 h-16 md:w-20 md:h-20 cursor-pointer rounded-lg border-2 transition-all ${
-              mainImage === image 
-                ? 'border-red-500 scale-105' 
-                : 'border-gray-200 hover:border-gray-300'
+            onClick={() => setActiveImage(index)}
+            className={`aspect-square overflow-hidden rounded-xl bg-gray-100 border-2 transition-all ${
+              index === activeImage 
+                ? 'border-blue-500 scale-105' 
+                : 'border-transparent hover:border-gray-300'
             }`}
-            onClick={() => handleImageChange(image)}
           >
             <Image
               src={image}
-              alt={`Thumbnail ${index + 1}`}
-              fill
-              style={{ objectFit: 'cover' }}
-              className="rounded"
+              alt={`${productName} view ${index + 1}`}
+              width={100}
+              height={100}
+              className="w-full h-full object-cover"
             />
-            <div className={`absolute inset-0 bg-black bg-opacity-0 transition-opacity ${
-              mainImage === image ? 'opacity-0' : 'group-hover:opacity-20'
-            }`}></div>
-          </motion.div>
+          </button>
         ))}
-      </div>
-
-      {/* Main Image */}
-      <div className="flex-1 relative h-96 md:h-[500px] bg-gray-50 rounded-xl overflow-hidden">
-        <AnimatePresence custom={direction} initial={false}>
-          <motion.div
-            key={mainImage}
-            custom={direction}
-            variants={variants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="absolute inset-0"
-          >
-            <DynamicImage imageUrl={mainImage} altText="Main Product Image" />
-          </motion.div>
-        </AnimatePresence>
       </div>
     </div>
   );

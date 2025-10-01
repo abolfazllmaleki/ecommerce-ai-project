@@ -8,7 +8,6 @@ const CartPage = () => {
   const { cart, total, loading, updateQuantity, removeItem } = useCart();
   const router = useRouter();
   
-  // Calculate shipping (free if over $100)
   const shippingCost = total >= 100 ? 0 : 15;
   const orderTotal = total + shippingCost;
 

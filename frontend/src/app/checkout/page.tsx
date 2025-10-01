@@ -1,204 +1,29 @@
-// 'use client';
-// import { useState } from 'react';
-// import { CartSummary } from '../components/CartSummary/CartSummary';
-// import { useCart } from '@/app/context/CartContext';
-// import { useAuth } from '@/app/context/AuthContext';
-
-// const CheckoutPage = () => {
-//   const { cart, total } = useCart(); // Get cart details from context
-//   const { user } = useAuth(); // Get user details from context
-//   console.log(user?.email)
-
-//   const [formData, setFormData] = useState({
-//     firstName: user?.name?.split(' ')[0] || '', // Pre-fill with user's first name
-//     companyName: '',
-//     streetAddress: '',
-//     apartment: '',
-//     city: '',
-//     phone:'', // Pre-fill with user's phone if available
-//     email: user?.email || '', // Pre-fill with user's email
-//     paymentMethod: 'visa',
-//   });
-
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-//     try {
-//       const orderData = {
-//         ...formData,
-//         cartItems: cart,
-//         total,
-//         userId: user?._id,
-//       };
-
-//       const response = await fetch('/api/orders', {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json',
-//           Authorization: `Bearer ${localStorage.getItem('token')}`,
-//         },
-//         body: JSON.stringify(orderData),
-//       });
-
-//       if (!response.ok) throw new Error('Failed to place order');
-//       alert('Order placed successfully!');
-//     } catch (error) {
-//       console.error('Error placing order:', error);
-//       alert('Failed to place order. Please try again.');
-//     }
-//   };
-
-//   return (
-//     <div className="container mx-auto px-4 py-8">
-//       <h1 className="text-3xl font-bold mb-8 text-gray-800">Checkout</h1>
-
-//       <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-8">
-//         {/* Billing Details */}
-//         <div>
-//           <h2 className="text-xl font-bold mb-4 text-gray-700">Billing Details</h2>
-//           <div className="space-y-4">
-//             <input
-//               type="text"
-//               placeholder="First Name*"
-//               required
-//               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-//               value={formData.firstName}
-//               onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-//             />
-//             <input
-//               type="text"
-//               placeholder="Company Name"
-//               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-//               value={formData.companyName}
-//               onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-//             />
-//             <input
-//               type="text"
-//               placeholder="Street Address*"
-//               required
-//               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-//               value={formData.streetAddress}
-//               onChange={(e) => setFormData({ ...formData, streetAddress: e.target.value })}
-//             />
-//             <input
-//               type="text"
-//               placeholder="Apartment, floor, etc. (optional)"
-//               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-//               value={formData.apartment}
-//               onChange={(e) => setFormData({ ...formData, apartment: e.target.value })}
-//             />
-//             <input
-//               type="text"
-//               placeholder="Town/City*"
-//               required
-//               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-//               value={formData.city}
-//               onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-//             />
-//             <input
-//               type="tel"
-//               placeholder="Phone Number*"
-//               required
-//               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-//               value={formData.phone}
-//               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-//             />
-//             <input
-//               type="email"
-//               placeholder="Email Address*"
-//               required
-//               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-//               value={formData.email}
-//               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-//             />
-//           </div>
-//         </div>
-
-//         {/* Order Summary */}
-//         <div>
-//           <div className="bg-gray-50 p-6 rounded-lg shadow-sm">
-//             <h2 className="text-xl font-bold mb-4 text-gray-700">Order Summary</h2>
-
-//             {/* Cart Items */}
-//             <div className="mb-6 space-y-4">
-//               {cart.map((item) => (
-//                 <div key={item.product._id} className="flex justify-between items-center">
-//                   <div className="flex items-center gap-3">
-//                     <img
-//                       src={item.product.images[0]}
-//                       alt={item.product.name}
-//                       className="w-12 h-12 rounded-lg object-cover"
-//                     />
-//                     <div>
-//                       <p className="text-gray-800 font-medium">{item.product.name}</p>
-//                       <p className="text-gray-500 text-sm">Qty: {item.quantity}</p>
-//                     </div>
-//                   </div>
-//                   <p className="text-gray-800 font-semibold">
-//                     ${(item.product.price * item.quantity).toFixed(2)}
-//                   </p>
-//                 </div>
-//               ))}
-//             </div>
-
-//             {/* Cart Summary */}
-//             <CartSummary subtotal={total} />
-
-//             {/* Payment Method */}
-//             <div className="mt-6">
-//               <h3 className="font-bold mb-4 text-gray-700">Payment Method</h3>
-//               <div className="space-y-3">
-//                 {['bank', 'visa', 'cod'].map((method) => (
-//                   <label
-//                     key={method}
-//                     className="flex items-center p-3 border border-gray-300 rounded-lg hover:border-red-500 transition-colors"
-//                   >
-//                     <input
-//                       type="radio"
-//                       value={method}
-//                       checked={formData.paymentMethod === method}
-//                       onChange={() => setFormData({ ...formData, paymentMethod: method })}
-//                       className="form-radio h-5 w-5 text-red-500"
-//                     />
-//                     <span className="ml-3 text-gray-700 capitalize">{method}</span>
-//                   </label>
-//                 ))}
-//               </div>
-//             </div>
-
-//             {/* Place Order Button */}
-//             <button
-//               type="submit"
-//               className="w-full mt-6 bg-red-500 text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition-colors"
-//             >
-//               Place Order
-//             </button>
-//           </div>
-//         </div>
-//       </form>
-//     </div>
-//   );
-// };
-
-// export default CheckoutPage;
 'use client';
 import { useState } from 'react';
 import { useCart } from '@/app/context/CartContext';
 import { useAuth } from '@/app/context/AuthContext';
-import { FiLock, FiCreditCard,  FiTruck, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
+import { FiLock, FiCreditCard, FiTruck, FiCheckCircle, FiAlertCircle, FiHome } from 'react-icons/fi';
+import { useRouter } from 'next/navigation';
 
 const CheckoutPage = () => {
-  const { cart, total } = useCart();
+  const { cart, total, clearCart } = useCart();
   const { user } = useAuth();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: user?.name?.split(' ')[0] || '',
+    lastName: user?.name?.split(' ')[1] || '',
     companyName: '',
     streetAddress: '',
     apartment: '',
     city: '',
+    state: '',
+    postalCode: '',
+    country: 'US',
     phone: '',
     email: user?.email || '',
     paymentMethod: 'visa',
@@ -212,9 +37,14 @@ const CheckoutPage = () => {
     setTimeout(() => setError(null), 5000);
   };
 
-  const showSuccess = (message: string) => {
+  const showSuccessAndRedirect = (message: string) => {
     setSuccess(message);
-    setTimeout(() => setSuccess(null), 5000);
+    setShowSuccessModal(true);
+    
+    // Redirect to home page after 5 seconds
+    setTimeout(() => {
+      router.push('/');
+    }, 5000);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -223,38 +53,122 @@ const CheckoutPage = () => {
     setError(null);
     
     try {
+      // Prepare products array in the format expected by the backend
+      const products = cart.map(item => ({
+        productId: item.product._id,
+        quantity: item.quantity,
+        price: item.product.price,
+        name: item.product.name
+      }));
+
+      // Prepare order data matching the CreateOrderDto interface
       const orderData = {
-        ...formData,
-        cartItems: cart,
-        total,
         userId: user?._id,
+        products,
+        totalPrice: orderTotal,
+        shippingAddress: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          companyName: formData.companyName,
+          streetAddress: formData.streetAddress,
+          apartment: formData.apartment,
+          city: formData.city,
+          state: formData.state,
+          postalCode: formData.postalCode,
+          country: formData.country
+        },
+        contactInfo: {
+          phone: formData.phone,
+          email: formData.email
+        },
+        paymentMethod: formData.paymentMethod
       };
 
-      const response = await fetch('/api/orders', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify(orderData),
       });
 
-      if (!response.ok) throw new Error('Failed to place order');
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON response:', text.substring(0, 200));
+        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to place order (${response.status})`);
+      }
       
-      showSuccess('Order placed successfully!');
-      // clearCart();
-      // Redirect to order confirmation page after 2 seconds
-      setTimeout(() => window.location.href = '/orders', 2000);
-    } catch (error) {
+      const result = await response.json();
+      
+      showSuccessAndRedirect('Payment successful! Your order has been placed.');
+      clearCart();
+    } catch (error: any) {
       console.error('Error placing order:', error);
-      showError('Failed to place order. Please try again.');
+      showError(error.message || 'Failed to place order. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleImmediateRedirect = () => {
+    setShowSuccessModal(false);
+    router.push('/');
+  };
+
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-8 max-w-md w-full text-center animate-fade-in-up">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FiCheckCircle className="text-green-500 text-3xl" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Payment Successful!</h2>
+            <p className="text-gray-600 mb-6">
+              Thank you for your order. You will be redirected to the home page shortly.
+            </p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={handleImmediateRedirect}
+                className="bg-red-500 hover:bg-red-600 text-white py-3 px-6 rounded-lg font-semibold transition-all flex items-center justify-center gap-2"
+              >
+                <FiHome className="text-lg" />
+                Go to Home Now
+              </button>
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="text-gray-500 hover:text-gray-700 py-2"
+              >
+                Stay on this page
+              </button>
+            </div>
+            <div className="mt-6 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-green-500 rounded-full transition-all duration-5000 ease-linear"
+                style={{ width: '100%' }}
+              ></div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col justify-between items-start mb-8">
         <div>
@@ -266,7 +180,7 @@ const CheckoutPage = () => {
       </div>
 
       {/* Status Toasts */}
-      {error && (
+     {error && (
         <div className="animate-fade-in-up bg-red-50 border-l-4 border-red-500 p-4 rounded-lg flex items-start gap-3 shadow-lg mb-6">
           <FiAlertCircle className="text-red-500 mt-0.5 flex-shrink-0" />
           <div className="flex-1">
@@ -275,6 +189,21 @@ const CheckoutPage = () => {
           <button 
             onClick={() => setError(null)}
             className="text-red-500 hover:text-red-700"
+          >
+            &times;
+          </button>
+        </div>
+      )}
+
+      {success && !showSuccessModal && (
+        <div className="animate-fade-in-up bg-green-50 border-l-4 border-green-500 p-4 rounded-lg flex items-start gap-3 shadow-lg mb-6">
+          <FiCheckCircle className="text-green-500 mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-green-700 font-medium">{success}</p>
+          </div>
+          <button 
+            onClick={() => setSuccess(null)}
+            className="text-green-500 hover:text-green-700"
           >
             &times;
           </button>
@@ -312,10 +241,11 @@ const CheckoutPage = () => {
                 <label className="block text-gray-700 mb-2 font-medium">Email Address*</label>
                 <input
                   type="email"
+                  name="email"
                   required
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={handleInputChange}
                 />
               </div>
               
@@ -323,10 +253,22 @@ const CheckoutPage = () => {
                 <label className="block text-gray-700 mb-2 font-medium">First Name*</label>
                 <input
                   type="text"
+                  name="firstName"
                   required
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-gray-700 mb-2 font-medium">Last Name</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  value={formData.lastName}
+                  onChange={handleInputChange}
                 />
               </div>
               
@@ -334,10 +276,11 @@ const CheckoutPage = () => {
                 <label className="block text-gray-700 mb-2 font-medium">Phone Number*</label>
                 <input
                   type="tel"
+                  name="phone"
                   required
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={handleInputChange}
                 />
               </div>
               
@@ -345,9 +288,10 @@ const CheckoutPage = () => {
                 <label className="block text-gray-700 mb-2 font-medium">Company Name (Optional)</label>
                 <input
                   type="text"
+                  name="companyName"
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   value={formData.companyName}
-                  onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                  onChange={handleInputChange}
                 />
               </div>
               
@@ -355,10 +299,11 @@ const CheckoutPage = () => {
                 <label className="block text-gray-700 mb-2 font-medium">Street Address*</label>
                 <input
                   type="text"
+                  name="streetAddress"
                   required
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   value={formData.streetAddress}
-                  onChange={(e) => setFormData({ ...formData, streetAddress: e.target.value })}
+                  onChange={handleInputChange}
                 />
               </div>
               
@@ -366,21 +311,61 @@ const CheckoutPage = () => {
                 <label className="block text-gray-700 mb-2 font-medium">Apartment, floor, etc. (optional)</label>
                 <input
                   type="text"
+                  name="apartment"
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   value={formData.apartment}
-                  onChange={(e) => setFormData({ ...formData, apartment: e.target.value })}
+                  onChange={handleInputChange}
                 />
               </div>
               
-              <div className="md:col-span-2">
-                <label className="block text-gray-700 mb-2 font-medium">Town/City*</label>
+              <div>
+                <label className="block text-gray-700 mb-2 font-medium">City*</label>
                 <input
                   type="text"
+                  name="city"
                   required
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  onChange={handleInputChange}
                 />
+              </div>
+              
+              <div>
+                <label className="block text-gray-700 mb-2 font-medium">State/Province</label>
+                <input
+                  type="text"
+                  name="state"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  value={formData.state}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-gray-700 mb-2 font-medium">Postal Code</label>
+                <input
+                  type="text"
+                  name="postalCode"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  value={formData.postalCode}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-gray-700 mb-2 font-medium">Country</label>
+                <select
+                  name="country"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  value={formData.country}
+                  onChange={handleInputChange}
+                >
+                  <option value="US">United States</option>
+                  <option value="CA">Canada</option>
+                  <option value="UK">United Kingdom</option>
+                  <option value="AU">Australia</option>
+                  {/* Add more countries as needed */}
+                </select>
               </div>
             </div>
           </div>
@@ -397,8 +382,9 @@ const CheckoutPage = () => {
             <div className="p-6 space-y-4">
               {[
                 { id: 'visa', name: 'Credit/Debit Card', icon: <FiCreditCard /> },
-                // { id: 'bank', name: 'Bank Transfer', icon: <FiBank /> },
-                { id: 'cod', name: 'Cash on Delivery', icon: <FiTruck /> }
+                { id: 'mastercard', name: 'Mastercard', icon: <FiCreditCard /> },
+                { id: 'paypal', name: 'PayPal', icon: <FiCreditCard /> },
+                { id: 'cash_on_delivery', name: 'Cash on Delivery', icon: <FiTruck /> }
               ].map((method) => (
                 <label
                   key={method.id}
@@ -410,9 +396,10 @@ const CheckoutPage = () => {
                 >
                   <input
                     type="radio"
+                    name="paymentMethod"
                     value={method.id}
                     checked={formData.paymentMethod === method.id}
-                    onChange={() => setFormData({ ...formData, paymentMethod: method.id })}
+                    onChange={handleInputChange}
                     className="form-radio h-5 w-5 text-red-500"
                   />
                   <div className="flex items-center gap-3 ml-3 text-gray-700">
@@ -431,6 +418,7 @@ const CheckoutPage = () => {
                         type="text"
                         placeholder="1234 5678 9012 3456"
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        required
                       />
                     </div>
                     
@@ -440,6 +428,7 @@ const CheckoutPage = () => {
                         type="text"
                         placeholder="MM/YY"
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        required
                       />
                     </div>
                     
@@ -449,6 +438,7 @@ const CheckoutPage = () => {
                         type="text"
                         placeholder="123"
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        required
                       />
                     </div>
                     
@@ -458,6 +448,7 @@ const CheckoutPage = () => {
                         type="text"
                         placeholder="John Doe"
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        required
                       />
                     </div>
                   </div>
@@ -528,9 +519,9 @@ const CheckoutPage = () => {
             
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || cart.length === 0}
               className={`w-full mt-6 bg-gradient-to-r from-red-500 to-red-600 text-white py-3 rounded-lg font-semibold transition-all shadow-sm flex items-center justify-center ${
-                isSubmitting 
+                isSubmitting || cart.length === 0
                   ? 'opacity-70 cursor-not-allowed' 
                   : 'hover:from-red-600 hover:to-red-700 hover:shadow-md'
               }`}
@@ -544,7 +535,7 @@ const CheckoutPage = () => {
                   Processing...
                 </>
               ) : (
-                'Place Order'
+                cart.length === 0 ? 'Cart is empty' : 'Place Order'
               )}
             </button>
             

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 const DynamicColor = ({ colors, selectedColor, onColorChange }: any) => {
   return (
     <div className="my-6">
-      <h3 className="text-sm font-medium text-gray-700 mb-3">COLOR</h3>
+      <h3 className="text-sm font-medium text-gray-700 mb-3">COLOR:</h3>
       <div className="flex gap-3">
         {colors.map((color: any, index: any) => (
           <motion.button

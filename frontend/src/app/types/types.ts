@@ -1,13 +1,19 @@
 // types.ts
-export const CATEGORIES = [
-  "Phone",
-  "Computer",
-  "Camera",
-  "Tablet",
-  "Accessories",
-  "Audio",
-  "Wearables",
-];
+// export const CATEGORIES = [
+//   "Phone",
+//   "Computer",
+//   "Camera",
+//   "Tablet",
+//   "Accessories",
+//   "Audio",
+//   "Wearables",
+// ];
+export interface Category {
+  _id: string;
+  name: string;
+}
+
+
 
 export const COLOR_OPTIONS = [
   "#FF0000",
@@ -31,12 +37,44 @@ export const COLOR_OPTIONS = [
   "#2E8B57",
   "#6A5ACD",
 ];
-
+export interface Order {
+  _id: string;
+  userId: string;
+  products: {
+    productId: string;
+    quantity: number;
+    price: number;
+    name: string;
+  }[];
+  totalPrice: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  shippingAddress: {
+    firstName: string;
+    lastName?: string;
+    companyName?: string;
+    streetAddress: string;
+    apartment?: string;
+    city: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+  };
+  contactInfo: {
+    phone: string;
+    email: string;
+  };
+  paymentMethod: 'visa' | 'mastercard' | 'paypal' | 'cash_on_delivery';
+  paymentStatus: 'pending' | 'completed' | 'failed' | 'refunded';
+  orderDate: Date;
+  shippedDate?: Date;
+  deliveredDate?: Date;
+}
 export interface Product {
   _id: string;
   name: string;
   description: string;
-  category: string;
+  // categoryId: any;
+  category: any;
   tags?: string[];
   price: number;
   stock: number;
@@ -47,11 +85,15 @@ export interface Product {
   numberOfReviews: number;
   images: string[];
   discount: number;
+  Specifications:string
+  adminNote: string;
 }
 
 export interface User {
-  id: string;
+  id?: string;
+  _id?:string;
   name: string;
+  lastName?:string;
   email: string;
   role?: string;
 }
@@ -61,9 +103,28 @@ export interface HomeContent {
   bannerText: string;
   promotionalDiscount: number;
 }
-export interface Category {
-  _id: any;
-  name: string;
-  icon: React.ReactNode;
-  href: string;
+// export interface Category {
+//   _id: any;
+//   name: string;
+//   icon: React.ReactNode;
+//   href: string;
+// }
+export interface Comment {
+  _id: string;
+  userId: string | User;
+  productId: string;
+  content: string;
+  likes: number;
+  dislikes: number;
+  isActive: boolean;
+  parentCommentId?: string;
+  depth: number;
+  currentUserId:string | User;
+  replyCount: number;
+  createdAt: string;
+  updatedAt: string;
+  hasLiked?: boolean;
+  hasDisliked?: boolean;
+  user?: User;
+  replies?: Comment[];
 }

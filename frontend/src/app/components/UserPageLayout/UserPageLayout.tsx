@@ -4,6 +4,7 @@ import React, { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { FiLogOut } from 'react-icons/fi';
+import { useAuth } from '@/app/context/AuthContext';
 
 interface LayoutProps {
   children: ReactNode;
@@ -11,12 +12,12 @@ interface LayoutProps {
 
 const UserPageLayout: React.FC<LayoutProps> = ({ children }) => {
   const router = useRouter();
+  const { logout } = useAuth(); 
+
 
   const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('access_token');
-      router.push('/login');
-    }
+    logout(); // Call the context logout function
+    router.push('/login');
   };
 
   return (
