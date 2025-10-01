@@ -8,9 +8,13 @@ export class Product extends Document {
 
   @Prop({ index: 'text' })
   description: string;
+  
+  @Prop({ index: 'text' })
+  Specifications: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Category', required: true })
   categoryId: Types.ObjectId;
+
 
   @Prop({ type: [String], default: [] })
   tags: string[];
@@ -65,6 +69,9 @@ export class Product extends Document {
 
   @Prop({ default: new Date() })
   lastUpdated: Date;
+
+  @Prop({ type: String, maxlength: 60, default: '' })
+  adminNote: string;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

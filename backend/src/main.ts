@@ -3,6 +3,8 @@ import { AppModule } from './app.module';
 import { json } from 'express';
 import { urlencoded } from 'express';
 import { ConfigService } from '@nestjs/config';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { Reflector } from '@nestjs/core';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,9 +24,11 @@ async function bootstrap() {
   // Body parser configuration
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ extended: true, limit: '10mb' }));
+  //   const reflector = app.get(Reflector);
+  // app.useGlobalGuards(new JwtAuthGuard(reflector));
 
   // Port configuration optimized for Vercel
-  const port = process.env.PORT || configService.get<number>('PORT') || 3000;
+  const port = process.env.PORT || configService.get<number>('PORT') || 3005;
   
   // API prefix
   app.setGlobalPrefix('api');
@@ -33,12 +37,12 @@ async function bootstrap() {
   await app.listen(port);
   
   // Enhanced logging
-  console.log(`Application is running on: ${await app.getUrl()}`);
-  console.log('NODE_ENV:', process.env.NODE_ENV);
-  console.log('CORS Origins:', [
-    'https://ecommerce-ai-project-uhbj.vercel.app',
-    'http://localhost:3000'
-  ]);
+  // console.log(`Application is running on: ${await app.getUrl()}`);
+  // console.log('NODE_ENV:', process.env.NODE_ENV);
+  // console.log('CORS Origins:', [
+  //   'https://ecommerce-ai-project-uhbj.vercel.app',
+  //   'http://localhost:3000'
+  // ]);
 }
 
 // Simplified bootstrap call

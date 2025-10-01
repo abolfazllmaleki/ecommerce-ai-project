@@ -13,6 +13,9 @@ import { AddInteractionDto } from './dto/add-interaction.dto';
 import { RateProductDto } from './dto/rate-product.dto';
 import { Product } from '../products/schemas/product.schema';
 import { ProductsService } from '../products/products.service';
+import * as crypto from 'crypto';
+import * as bcrypt from 'bcrypt';
+
 
 @Injectable()
 export class UsersService {
@@ -133,58 +136,142 @@ export class UsersService {
     return updatedUser;
   }
 
-  async rateProduct(
-    userId: string,
-    rateProductDto: RateProductDto,
-  ): Promise<User> {
-    const { productId, rating } = rateProductDto;
-    console.log('rating services');
-    const user = await this.userModel.findById(userId);
+  // async rateProduct(
+  //   userId: string,
+  //   rateProductDto: RateProductDto,
+  // ): Promise<User> {
+  //   const { productId, rating } = rateProductDto;
+  //   console.log('rating services');
+  //   const user = await this.userModel.findById(userId);
+  //   if (!user) {
+  //     throw new NotFoundException('User not found');
+  //   }
+
+  //   const product = await this.productModel.findById(productId);
+  //   if (!product) {
+  //     throw new NotFoundException('Product not found');
+  //   }
+
+  //   // تبدیل productId به ObjectId
+  //   const productObjectId = new Types.ObjectId(productId);
+
+  //   // Check if user already rated this product
+  //   const existingRating = user.ratings.find(
+  //     (r) => r.product.toString() === productObjectId.toString(),
+  //   );
+
+  //   if (existingRating) {
+  //     // Update existing rating
+  //     existingRating.rating = rating;
+  //   } else {
+  //     // Add new rating
+  //     user.ratings.push({ product: productObjectId, rating });
+  //   }
+
+  //   await user.save();
+
+  //   const allRatings = await this.userModel.aggregate([
+  //     { $match: { 'ratings.product': product._id } },
+  //     { $unwind: '$ratings' },
+  //     { $match: { 'ratings.product': product._id } },
+  //     {
+  //       $group: {
+  //         _id: null,
+  //         averageRating: { $avg: '$ratings.rating' },
+  //       },
+  //     },
+  //   ]);
+
+  //   product.rating = allRatings.length ? allRatings[0].averageRating : 0;
+  //   if(user.ratings.includes(Product.app)){
+
+  //     product.numberOfReviews = product.numberOfReviews+1
+  //   }
+  //   await product.save();
+
+  //   return user;
+  // }
+    async updatePassword(userId: string, hashedPassword: string): Promise<User> {
+    const user = await this.userModel.findByIdAndUpdate(
+      userId,
+      { password: hashedPassword },
+      { new: true }
+    ).exec();
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    const product = await this.productModel.findById(productId);
-    if (!product) {
-      throw new NotFoundException('Product not found');
-    }
-
-    // تبدیل productId به ObjectId
-    const productObjectId = new Types.ObjectId(productId);
-
-    // Check if user already rated this product
-    const existingRating = user.ratings.find(
-      (r) => r.product.toString() === productObjectId.toString(),
-    );
-
-    if (existingRating) {
-      // Update existing rating
-      existingRating.rating = rating;
-    } else {
-      // Add new rating
-      user.ratings.push({ product: productObjectId, rating });
-    }
-
-    await user.save();
-
-    // ✅ Recalculate product's average rating
-    const allRatings = await this.userModel.aggregate([
-      { $match: { 'ratings.product': product._id } },
-      { $unwind: '$ratings' },
-      { $match: { 'ratings.product': product._id } },
-      {
-        $group: {
-          _id: null,
-          averageRating: { $avg: '$ratings.rating' },
-        },
-      },
-    ]);
-
-    product.rating = allRatings.length ? allRatings[0].averageRating : 0;
-    await product.save();
-
     return user;
   }
+
+
+  async rateProduct(
+  userId: string,
+  rateProductDto: RateProductDto,
+): Promise<User> {
+  const { productId, rating } = rateProductDto;
+
+  const user = await this.userModel.findById(userId);
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  const product = await this.productModel.findById(productId);
+  if (!product) {
+    throw new NotFoundException('Product not found');
+  }
+
+  const productObjectId = new Types.ObjectId(productId);
+
+  // Check if user already rated this product
+  const existingRating = user.ratings.find(
+    (r) => r.product.toString() === productObjectId.toString(),
+  );
+
+  let isNewRating = false;
+
+  if (existingRating) {
+    // Update existing rating
+    existingRating.rating = rating;
+  } else {
+    // Add new rating
+    user.ratings.push({ product: productObjectId, rating });
+    isNewRating = true; // mark as a new review
+  }
+
+  await user.save();
+
+  // Recalculate product's average rating
+  const allRatings = await this.userModel.aggregate([
+    { $match: { 'ratings.product': product._id } },
+    { $unwind: '$ratings' },
+    { $match: { 'ratings.product': product._id } },
+    {
+      $group: {
+        _id: null,
+        averageRating: { $avg: '$ratings.rating' },
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  if (allRatings.length) {
+    product.rating = allRatings[0].averageRating;
+    if (isNewRating) {
+      // Only increment numberOfReviews if this is a new rating
+      product.numberOfReviews = allRatings[0].count;
+    }
+  } else {
+    product.rating = 0;
+    product.numberOfReviews = 0;
+  }
+
+  await product.save();
+
+  return user;
+}
+
 
   async generateRecommendations(
     userId: string,
@@ -278,4 +365,70 @@ export class UsersService {
       ])
       .exec();
   }
+
+  async createPasswordResetToken(email: string): Promise<string | null> {
+    const user = await this.userModel.findOne({ email });
+    
+    if (!user) {
+      // Don't reveal if email exists or not for security
+      return null;
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
+
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = resetTokenExpiry;
+    
+    await user.save();
+
+    return resetToken;
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<boolean> {
+    const user = await this.userModel.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: new Date() }
+    });
+
+    if (!user) {
+      throw new NotFoundException('Invalid or expired reset token');
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined as any;
+    user.resetPasswordExpires = undefined as any;
+    
+    await user.save();
+
+    return true;
+  }
+
+  async findByResetToken(token: string): Promise<User | null> {
+    return this.userModel.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: new Date() }
+    });
+  }
+
+
+async getUserProductRating(userId: string, productId: string) {
+  const user = await this.userModel.findById(userId);
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+  
+  const rating = user.ratings.find(
+    r => r.product.toString() === productId
+  );
+  
+  return {
+    rating: rating ? rating.rating : 0,
+    hasRated: !!rating
+  };
+}
 }

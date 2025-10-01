@@ -1,7 +1,12 @@
+import { Transform } from 'class-transformer';
+import { Types } from 'mongoose';
 export class CreateProductDto {
   readonly name: string;
   readonly description?: string;
-  readonly category: string;
+
+  @Transform(({ value }) => new Types.ObjectId(value))
+  readonly category: Types.ObjectId;
+  
   readonly tags?: string[];
   readonly price: number;
   readonly stock?: number;

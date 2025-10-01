@@ -122,7 +122,6 @@ export class UsersController {
     @Param('id') userId: string,
     @Body() rateProductDto: RateProductDto,
   ): Promise<User> {
-    console.log('rating controller');
 
     return this.usersService.rateProduct(userId, rateProductDto);
   }
@@ -157,5 +156,16 @@ export class UsersController {
     @Body('category') category: string,
   ): Promise<User> {
     return this.usersService.removePreferredCategory(userId, category);
+  }
+
+
+  @Get(':id/product/:productId')
+  async getUserProductRating(
+    @Param('id') userId: string,
+    @Param('productId') productId: string,
+  ) {
+    console.log(userId)
+    console.log(productId)
+    return this.usersService.getUserProductRating(userId, productId);
   }
 }

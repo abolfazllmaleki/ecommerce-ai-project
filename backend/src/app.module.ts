@@ -10,6 +10,10 @@ import { CategoriesModule } from './categories/categories.module';
 import { AuthModule } from './auth/auth.module';
 import { CartModule } from './cart/cart.module';
 import { ConfigModule ,ConfigService } from '@nestjs/config';
+import { CommentsModule } from './comments/comments.module';
+import { EmailModule } from './email/email.module';
+import { RecaptchaModule } from './recaptcha/recaptcha.module';
+import { ContactModule } from './contact/contact.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -30,6 +34,10 @@ import { ConfigModule ,ConfigService } from '@nestjs/config';
     CategoriesModule,
     AuthModule,
     CartModule,
+    CommentsModule,
+    EmailModule,
+    RecaptchaModule,
+    ContactModule
   ],
   controllers: [AppController],
   providers: [AppService],

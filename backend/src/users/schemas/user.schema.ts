@@ -4,6 +4,12 @@ import { Types } from 'mongoose';
 import { Product } from '../../products/schemas/product.schema';
 import { Order } from '../../orders/schemas/order.schema';
 
+export enum UserRole {
+  USER = 'user',
+  ADMIN = 'admin',
+  MODERATOR = 'moderator',
+}
+
 @Schema()
 export class User extends Document {
   @Prop({ required: true })
@@ -16,6 +22,12 @@ export class User extends Document {
 
   @Prop({ required: true })
   password: string;
+    @Prop({ 
+    type: String, 
+    enum: Object.values(UserRole), 
+    default: UserRole.USER 
+  })
+  role: UserRole;
 
   @Prop({ default: Date.now })
   createdAt: Date;
@@ -23,8 +35,7 @@ export class User extends Document {
   @Prop({ default: Date.now })
   lastLoggedIn: Date;
 
-  @Prop({ default: 'user' })
-  role: string;
+
 
   @Prop({ type: [Types.ObjectId], ref: 'Product', default: [] })
   recommendations: Product[];
@@ -32,33 +43,6 @@ export class User extends Document {
   @Prop({ type: [Types.ObjectId], ref: 'Product', default: [] })
   wishList: Product[];
 
-  // @Prop({ type: [Types.ObjectId], ref: 'Order', default: [] })
-  // pendingOrders: Order[];
-
-  // @Prop({ type: [Types.ObjectId], ref: 'Order', default: [] })
-  // canceledOrders: Order[];
-
-  // @Prop({ type: [Types.ObjectId], ref: 'Order', default: [] })
-  // purchaseHistory: Order[];
-
-  // @Prop({
-  //   type: [
-  //     {
-  //       product: { type: Types.ObjectId, ref: 'Product' },
-  //       interactionType: { type: String },
-  //       timestamp: { type: Date },
-  //     },
-  //   ],
-  //   default: [],
-  // })
-  // interactionHistory: {
-  //   product: Product;
-  //   interactionType: string;
-  //   timestamp: Date;
-  // }[];
-
-  // @Prop({ type: [String], default: [] })
-  // preferredCategories: string[];
 
   @Prop({
     type: [
@@ -74,8 +58,19 @@ export class User extends Document {
     rating: number;
   }[];
 
-  // @Prop({ type: Number, default: 0 })
-  // engagementScore: number;
+  @Prop({ default: false })
+  isEmailVerified: boolean;
+
+  @Prop()
+  verificationToken: string;
+
+  @Prop({ type: String })
+  resetPasswordToken?: string;
+
+  @Prop({ type: Date })
+  resetPasswordExpires?: Date;
+
+
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
