@@ -10,11 +10,11 @@ import {
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { Category } from './schemas/category.schema';
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { UseGuards } from '@nestjs/common';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { UserRole } from 'src/users/schemas/user.schema';
+// import { Roles } from 'src/auth/decorators/roles.decorator';
+// import { UseGuards } from '@nestjs/common';
+// import { RolesGuard } from 'src/auth/guards/roles.guard';
+// import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+// import { UserRole } from 'src/users/schemas/user.schema';
 
 @Controller('categories')
 export class CategoriesController {

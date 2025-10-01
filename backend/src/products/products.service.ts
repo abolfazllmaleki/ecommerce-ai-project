@@ -5,7 +5,7 @@ import { Product } from './schemas/product.schema';
 import * as mongoose from 'mongoose';
 import { ObjectId } from 'mongodb';
 import { Types } from 'mongoose';
-import { Category } from 'src/categories/schemas/category.schema';
+import { Category } from '../categories/schemas/category.schema';
 
 
 @Injectable()

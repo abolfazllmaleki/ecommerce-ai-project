@@ -18,9 +18,9 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { UserRole } from 'src/users/schemas/user.schema';
+// import { Roles } from 'src/auth/decorators/roles.decorator';
+// import { RolesGuard } from 'src/auth/guards/roles.guard';
+// import { UserRole } from 'src/users/schemas/user.schema';
 @ApiTags('comments')
 @ApiBearerAuth()
 @Controller('comments')

@@ -109,15 +109,15 @@
   
 // }
 import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+// import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dtos/login.dto';
 import { CreateUserDto } from '../users/dto/create-user.dto';
-import { Req } from '@nestjs/common/decorators';
+// import { Req } from '@nestjs/common/decorators';
 import { Public } from './decorators/public.decorator';
 import { ForgotPasswordDto } from './dtos/forgot-password.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
-import { UsersService } from 'src/users/users.service';
+import { UsersService } from '../users/users.service';
 import { Param } from '@nestjs/common/decorators';
 import { BadRequestException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';

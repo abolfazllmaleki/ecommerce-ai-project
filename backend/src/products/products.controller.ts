@@ -13,16 +13,16 @@ import { ProductsService } from './products.service';
 import { Product } from './schemas/product.schema';
 import { BadRequestException } from '@nestjs/common';
 import { Query } from '@nestjs/common';
-import * as mongoose from 'mongoose';
-import { ObjectId } from 'mongodb';
-import { Types } from 'mongoose';
+// import * as mongoose from 'mongoose';
+// import { ObjectId } from 'mongodb';
+// import { Types } from 'mongoose';
 import { HttpException } from '@nestjs/common';
 import { HttpStatus } from '@nestjs/common';
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { UseGuards } from '@nestjs/common';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { UserRole } from 'src/users/schemas/user.schema';
+// import { Roles } from 'src/auth/decorators/roles.decorator';
+// import { UseGuards } from '@nestjs/common';
+// import { RolesGuard } from 'src/auth/guards/roles.guard';
+// import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+// import { UserRole } from 'src/users/schemas/user.schema';
 
 @Controller('products')
 export class ProductsController {
