@@ -7,7 +7,7 @@ import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
-import { EmailModule } from 'src/email/email.module';
+import { EmailModule } from '../email/email.module';
 import { HttpModule } from '@nestjs/axios';
 @Module({
   imports: [
