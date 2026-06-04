@@ -1,29 +1,46 @@
-import { Injectable, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
-import { CreateUserDto } from '../users/dto/create-user.dto';
-import { User, UserRole } from '../users/schemas/user.schema';
 import { v4 as uuidv4 } from 'uuid';
 import { EmailService } from '../email/email.service';
+import { CreateUserDto } from '../users/dto/create-user.dto';
+import { UserRole } from '../users/domain/user.entity';
+import { CreateUserUseCase } from '../users/application/use-cases/create-user.usecase';
+import { FindUserByEmailUseCase } from '../users/application/use-cases/find-user-by-email.usecase';
+import { FindUserByIdUseCase } from '../users/application/use-cases/find-user-by-id.usecase';
+import { UpdatePasswordUseCase } from '../users/application/use-cases/update-password.usecase';
+import { CreatePasswordResetTokenUseCase } from '../users/application/use-cases/create-password-reset-token.usecase';
+import { ResetPasswordUseCase } from '../users/application/use-cases/reset-password.usecase';
+import { FindUserByResetTokenUseCase } from '../users/application/use-cases/find-user-by-reset-token.usecase';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private usersService: UsersService,
-    private jwtService: JwtService,
-    private emailService: EmailService,
+    private readonly createUser: CreateUserUseCase,
+    private readonly findUserByEmail: FindUserByEmailUseCase,
+    private readonly findUserById: FindUserByIdUseCase,
+    private readonly updatePassword: UpdatePasswordUseCase,
+    private readonly createPasswordResetToken: CreatePasswordResetTokenUseCase,
+    private readonly resetPassword: ResetPasswordUseCase,
+    private readonly findUserByResetToken: FindUserByResetTokenUseCase,
+    private readonly jwtService: JwtService,
+    private readonly emailService: EmailService,
   ) {}
 
   async validateUser(
     email: string,
     pass: string,
   ): Promise<{ _id: string; email: string; role: UserRole } | null> {
-    const user = await this.usersService.findByEmail(email);
+    const user = await this.findUserByEmail.execute(email);
 
     if (user && (await bcrypt.compare(pass, user.password))) {
       return {
-        _id: (user._id as any).toString(), // Fix the _id type issue
+        _id: user.id as string,
         email: user.email,
         role: user.role,
       };
@@ -31,8 +48,9 @@ export class AuthService {
     return null;
   }
 
-  async validateUserById(userId: string): Promise<User | null> {
-    return this.usersService.findOne(userId);
+  async validateUserById(userId: string) {
+    const user = await this.findUserById.execute(userId);
+    return user ? user.toPlainObject() : null;
   }
 
   async login(user: any) {
@@ -53,76 +71,67 @@ export class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
-      }
+      },
     };
   }
 
   async register(createUserDto: CreateUserDto) {
     const { name, email, password, role = UserRole.USER } = createUserDto;
 
-    // Validate role if provided (convert string to enum if needed)
     if (role && !Object.values(UserRole).includes(role as UserRole)) {
       throw new BadRequestException('Invalid role specified');
     }
 
-    // Check if user already exists
-    const existingUser = await this.usersService.findByEmail(email);
+    const existingUser = await this.findUserByEmail.execute(email);
     if (existingUser) {
       throw new ConflictException('User already exists');
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create user with hashed password - use proper typing
-    const userData: any = {
+    return this.createUser.execute({
       name,
       email,
       password: hashedPassword,
       role: role as UserRole,
       isEmailVerified: false,
       verificationToken: uuidv4(),
-    };
-
-    return this.usersService.create(userData);
+    });
   }
 
   async changePassword(userId: string, oldPassword: string, newPassword: string) {
-    const user = await this.usersService.findOne(userId);
-    
+    const user = await this.findUserById.execute(userId);
+
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
 
     const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password);
-    
+
     if (!isOldPasswordValid) {
       throw new UnauthorizedException('Current password is incorrect');
     }
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 12);
-    await this.usersService.updatePassword(userId, hashedNewPassword);
+    await this.updatePassword.execute(userId, hashedNewPassword);
 
     return { message: 'Password updated successfully' };
   }
 
   async forgotPassword(email: string): Promise<void> {
-    const resetToken = await this.usersService.createPasswordResetToken(email);
-    
+    const resetToken = await this.createPasswordResetToken.execute(email);
+
     if (resetToken) {
       await this.emailService.sendPasswordResetEmail(email, resetToken);
     }
-
-    // Always return success to prevent email enumeration
-    return;
   }
 
-  async resetPassword(token: string, newPassword: string): Promise<void> {
-    const success = await this.usersService.resetPassword(token, newPassword);
-    
+  async resetPasswordHandler(token: string, newPassword: string): Promise<void> {
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    const success = await this.resetPassword.execute(token, hashedPassword);
+
     if (success) {
-      // Optionally send confirmation email
-      const user = await this.usersService.findByResetToken(token);
+      const user = await this.findUserByResetToken.execute(token);
       if (user) {
         await this.emailService.sendPasswordResetConfirmation(user.email);
       }

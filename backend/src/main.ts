@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 import { json } from 'express';
 import { urlencoded } from 'express';
 import { ConfigService } from '@nestjs/config';
-import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from './auth/presentation/guards/jwt-auth.guard';
 import { Reflector } from '@nestjs/core';
 
 async function bootstrap() {

@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { ProductsController } from './products.controller';
-import { ProductSchema } from './infrastructure/product.schema';
-import { ProductRepository } from './infrastructure/product.repository.mongo';
+import { ProductsController } from './interface/products.controller';
+import { ProductSchema } from './schemas/product.schema';
+import { ProductRepository } from './infrastructure/product.repository';
 
 // UseCases
-import { CreateProductUseCase } from './application/use-cases/create-product.usecase';
+import { CreateProductUseCase } from './application/use-cases/create-product.use-case';
+import { GetRelatedProductsUseCase } from './application/use-cases/get-related-products.usecase';
 import { FindAllProductsUseCase } from './application/use-cases/find-all-products.usecase';
 import { FindProductByIdUseCase } from './application/use-cases/find-product-by-id.usecase';
 import { UpdateProductUseCase } from './application/use-cases/update-product.usecase';
@@ -43,7 +44,8 @@ import { AddFeedbackKeywordsUseCase } from './application/use-cases/add-feedback
     IncrementProductFieldUseCase,
     UpdateSimilarProductsUseCase,
     AddFeedbackKeywordsUseCase,
+    GetRelatedProductsUseCase,
   ],
-  exports: ['IProductRepository'],
+  exports: ['IProductRepository', IncrementProductFieldUseCase],
 })
 export class ProductsModule {}

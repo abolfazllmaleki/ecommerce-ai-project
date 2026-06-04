@@ -1,123 +1,13 @@
-// import { Controller, Post, Body, UseGuards,HttpCode, HttpStatus  } from '@nestjs/common';
-// import { AuthGuard } from '@nestjs/passport';
-// import { AuthService } from './auth.service';
-// import { LoginDto } from './dtos/login.dto';
-// import { CreateUserDto } from '../users/dto/create-user.dto';
-// import { Req } from '@nestjs/common/decorators';
-// import { Public } from './decorators/public.decorator';
-// import { ForgotPasswordDto } from './dtos/forgot-password.dto';
-// import { ResetPasswordDto } from './dtos/reset-password.dto';
-// import { UsersService } from 'src/users/users.service';
-// import { Param } from '@nestjs/common/decorators';
-// import { BadRequestException } from '@nestjs/common';
-// import { HttpService } from '@nestjs/axios';
-// @Controller('auth')
-// export class AuthController {
-//   constructor(
-//     private authService: AuthService,
-//     private usersService: UsersService,
-//     private readonly httpService: HttpService,
-//   ) {}
-
-//   @Post('register')
-//   async register(@Body() createUserDto: CreateUserDto) {
-//       const isRecaptchaValid = await this.verifyRecaptcha(body.recaptchaToken);
-    
-//     if (!isRecaptchaValid) {
-//       return { success: false, message: 'reCAPTCHA verification failed' };
-//     }
-
-
-//     return this.authService.register(createUserDto);
-//   }
-
-//   @UseGuards(AuthGuard('local'))
-//   @Post('login')
-//   async login(@Req() req) {
-//     const isRecaptchaValid = await this.verifyRecaptcha(body.recaptchaToken);
-    
-//     if (!isRecaptchaValid) {
-//       return { success: false, message: 'reCAPTCHA verification failed' };
-//     }
-//     return this.authService.login(req.user);
-//   }
-
-//     @Public()
-//   @Post('forgot-password')
-//   @HttpCode(HttpStatus.ACCEPTED)
-//   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-//     await this.authService.forgotPassword(forgotPasswordDto.email);
-//     return { 
-//       message: 'If the email exists, a password reset link has been sent' 
-//     };
-//   }
-
-//   @Public()
-//   @Post('reset-password')
-//   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
-//         const isRecaptchaValid = await this.verifyRecaptcha(body.recaptchaToken);
-    
-//     if (!isRecaptchaValid) {
-//       return { success: false, message: 'reCAPTCHA verification failed' };
-//     }
-//     await this.authService.resetPassword(
-//       resetPasswordDto.token,
-//       resetPasswordDto.password
-//     );
-//     return { message: 'Password reset successfully' };
-//   }
-
-//   @Public()
-//   @Post('validate-reset-token/:token')
-//   async validateResetToken(@Param('token') token: string) {
-//     const user = await this.usersService.findByResetToken(token);
-    
-//     if (!user) {
-//       throw new BadRequestException('Invalid or expired reset token');
-//     }
-
-//     return { valid: true, email: user.email };
-//   }
-
-//    private async verifyRecaptcha(token: string): Promise<boolean> {
-//     // For development, skip verification if using test key
-//     if (process.env.NODE_ENV === 'development' && token === 'test-token') {
-//       return true;
-//     }
-
-//     try {
-//       const secretKey = process.env.RECAPTCHA_SECRET_KEY;
-//       const response = await firstValueFrom(
-//         this.httpService.post(
-//           `https://www.google.com/recaptcha/api/siteverify`,
-//           null,
-//           {
-//             params: {
-//               secret: secretKey,
-//               response: token,
-//             },
-//           },
-//         ),
-//       );
-
-//       return response.data.success;
-//     } catch (error) {
-//       console.error('reCAPTCHA verification error:', error);
-//       return false;
-//     }
-//   }
-  
-// }
 import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 // import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dtos/login.dto';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 // import { Req } from '@nestjs/common/decorators';
-import { Public } from './decorators/public.decorator';
+import { Public } from './presentation/decorators/public.decorator';
 import { ForgotPasswordDto } from './dtos/forgot-password.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
-import { UsersService } from '../users/users.service';
+import { FindUserByResetTokenUseCase } from '../users/application/use-cases/find-user-by-reset-token.usecase';
 import { Param } from '@nestjs/common/decorators';
 import { BadRequestException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
@@ -142,7 +32,7 @@ class ResetPasswordWithRecaptchaDto extends ResetPasswordDto {
 export class AuthController {
   constructor(
     private authService: AuthService,
-    private usersService: UsersService,
+    private readonly findUserByResetToken: FindUserByResetTokenUseCase,
     private readonly httpService: HttpService,
   ) {}
 
@@ -200,9 +90,9 @@ export class AuthController {
     
     // Remove recaptchaToken before passing to authService
     const { recaptchaToken, ...resetData } = resetPasswordDto;
-    await this.authService.resetPassword(
+    await this.authService.resetPasswordHandler(
       resetData.token,
-      resetData.password
+      resetData.password,
     );
     return { message: 'Password reset successfully' };
   }
@@ -210,8 +100,8 @@ export class AuthController {
   @Public()
   @Post('validate-reset-token/:token')
   async validateResetToken(@Param('token') token: string) {
-    const user = await this.usersService.findByResetToken(token);
-    
+    const user = await this.findUserByResetToken.execute(token);
+
     if (!user) {
       throw new BadRequestException('Invalid or expired reset token');
     }

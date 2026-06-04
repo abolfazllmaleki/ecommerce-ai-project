@@ -240,6 +240,24 @@ export class ProductRepository implements IProductRepository {
     return updated ? ProductMapper.toDomain(updated) : null;
   }
 
+  async updateRatingStats(
+    id: string,
+    rating: number,
+    numberOfReviews: number,
+  ): Promise<ProductEntity | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
+
+    const updated = await this.model
+      .findByIdAndUpdate(
+        id,
+        { $set: { rating, numberOfReviews } },
+        { new: true },
+      )
+      .exec();
+
+    return updated ? ProductMapper.toDomain(updated) : null;
+  }
+
   private escapeRegex(value: string): string {
     return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }

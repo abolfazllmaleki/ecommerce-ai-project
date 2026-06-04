@@ -55,4 +55,10 @@ export interface IProductRepository {
     id: string,
     keywords: string[],
   ): Promise<Product | null>;
+
+  updateRatingStats(
+    id: string,
+    rating: number,
+    numberOfReviews: number,
+  ): Promise<Product | null>;
 }
