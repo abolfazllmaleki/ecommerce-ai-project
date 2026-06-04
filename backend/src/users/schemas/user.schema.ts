@@ -5,7 +5,7 @@ import { UserRole } from '../domain/user.entity';
 export { UserRole };
 
 @Schema()
-export class User extends Document {
+export class UserSchemaClass  extends Document {
   @Prop({ required: true })
   name: string;
 
@@ -86,6 +86,5 @@ export class User extends Document {
   engagementScore: number;
 }
 
-export type UserDocument = User & Document;
-
-export const UserSchema = SchemaFactory.createForClass(User);
+export type UserDocument = UserSchemaClass & Document;
+export const UserSchema = SchemaFactory.createForClass(UserSchemaClass);

@@ -5,6 +5,7 @@ import {
   Param,
   HttpCode,
   HttpStatus,
+  Get,
 } from "@nestjs/common";
 
 import { LoginUseCase } from "../application/use-cases/login.usecase";
@@ -13,11 +14,11 @@ import { ForgotPasswordUseCase } from "../application/use-cases/forgot-password.
 import { ResetPasswordUseCase } from "../application/use-cases/reset-password.usecase";
 import { ValidateResetTokenUseCase } from "../application/use-cases/validate-reset-token.usecase";
 
-import { RegisterDto } from "./dtos/register.dto";
-import { LoginDto } from "./dtos/login.dto";
-import { ForgotPasswordDto } from "./dtos/forgot-password.dto";
-import { ResetPasswordDto } from "./dtos/reset-password.dto";
-import { AuthResponseDto } from "./dtos/auth-response.dto";
+import { RegisterDto } from "../dtos/register.dto";
+import { LoginDto } from "../dtos/login.dto";
+import { ForgotPasswordDto } from "../dtos/forgot-password.dto";
+import { ResetPasswordDto } from "../dtos/reset-password.dto";
+import { AuthResponseDto } from "../dtos/auth-response.dto";
 
 @Controller("auth")
 export class AuthController {
@@ -43,7 +44,7 @@ export class AuthController {
     );
 
     return {
-      id: user.id,
+      id: user.id!,
       email: user.email,
     };
   }
@@ -54,7 +55,7 @@ export class AuthController {
     @Body() dto: LoginDto,
   ): Promise<AuthResponseDto> {
 
-    return await this.loginUseCase.execute(
+    return this.loginUseCase.execute(
       dto.email,
       dto.password,
     );
@@ -89,7 +90,7 @@ export class AuthController {
     };
   }
 
-  @Post("validate-reset-token/:token")
+  @Get("reset-password/validate/:token")
   @HttpCode(HttpStatus.OK)
   async validateResetToken(
     @Param("token") token: string,

@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { Product } from '../../products/schemas/product.schema';
 
 @Schema({ timestamps: true })
 export class Cart extends Document {
@@ -30,8 +29,10 @@ export class Cart extends Document {
   total: number;
 }
 
-function arrayLimit(val) {
+function arrayLimit(val: any[]) {
   return val.length <= 20;
 }
+
+export type CartDocument = Cart & Document;
 
 export const CartSchema = SchemaFactory.createForClass(Cart);

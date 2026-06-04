@@ -10,25 +10,23 @@ export class CreateProductUseCase {
     private readonly repo: IProductRepository,
   ) {}
 
-  async execute(dto: CreateProductDto): Promise<Product> {
-    const product = new Product(
-      null,
-      dto.name,
-      dto.price,
-      dto.category,
-      dto.stock,
-      {
-        description: dto.description,
-        tags: dto.tags ?? [],
-        brand: dto.brand,
-        images: dto.images ?? [],
-        colors: dto.colors ?? [],
-        sizes: dto.sizes ?? [],
-        discount: dto.discount ?? 0,
-        isFeatured: dto.isFeatured ?? false,
-      },
-    );
+async execute(dto: CreateProductDto): Promise<Product> {
+  const product = new Product({
+    name: dto.name,
+    price: dto.price,
+    categoryId: dto.category,
+    stock: dto.stock,
+    description: dto.description,
+    tags: dto.tags ?? [],
+    brand: dto.brand,
+    images: dto.images ?? [],
+    colors: dto.colors ?? [],
+    sizes: dto.sizes ?? [],
+    discount: dto.discount ?? 0,
+    isFeatured: dto.isFeatured ?? false,
+  });
 
-    return this.repo.create(product);
-  }
+  return this.repo.create(product);
+}
+
 }

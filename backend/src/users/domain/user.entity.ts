@@ -1,18 +1,7 @@
 export enum UserRole {
-  USER = 'user',
-  ADMIN = 'admin',
-  MODERATOR = 'moderator',
-}
-
-export interface UserRating {
-  productId: string;
-  rating: number;
-}
-
-export interface InteractionRecord {
-  productId: string;
-  interactionType: string;
-  timestamp: Date;
+  USER = 'USER',
+  ADMIN = 'ADMIN',
+  MODERATOR = 'MODERATOR',
 }
 
 export interface UserProps {
@@ -26,53 +15,55 @@ export interface UserProps {
   lastLoggedIn?: Date;
   recommendations?: string[];
   wishList?: string[];
-  ratings?: UserRating[];
+  ratings?: { productId: string; rating: number }[];
   isEmailVerified?: boolean;
   verificationToken?: string;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
-  interactionHistory?: InteractionRecord[];
+  interactionHistory?: {
+    productId: string;
+    interactionType: string;
+    timestamp: Date;
+  }[];
   preferredCategories?: string[];
   engagementScore?: number;
 }
+
 
 export class User {
   public readonly id: string | null;
   public name: string;
   public lastname?: string;
   public email: string;
-  public password: string;
+  private _password: string;
   public role: UserRole;
   public readonly createdAt: Date;
   public lastLoggedIn: Date;
   public recommendations: string[];
   public wishList: string[];
-  public ratings: UserRating[];
+  public ratings: { productId: string; rating: number }[];
   public isEmailVerified: boolean;
   public verificationToken?: string;
   public resetPasswordToken?: string;
   public resetPasswordExpires?: Date;
-  public interactionHistory: InteractionRecord[];
+  public interactionHistory: {
+    productId: string;
+    interactionType: string;
+    timestamp: Date;
+  }[];
   public preferredCategories: string[];
   public engagementScore: number;
-  public updatedAt?: Date;
 
   constructor(props: UserProps) {
-    if (!props.name?.trim()) {
-      throw new Error('نام کاربر الزامی است.');
-    }
-    if (!props.email?.trim()) {
-      throw new Error('ایمیل الزامی است.');
-    }
-    if (!props.password) {
-      throw new Error('رمز عبور الزامی است.');
-    }
+    if (!props.name?.trim()) throw new Error('Name is required');
+    if (!props.email?.trim()) throw new Error('Email is required');
+    if (!props.password) throw new Error('Password hash is required');
 
     this.id = props.id ?? null;
     this.name = props.name;
     this.lastname = props.lastname;
-    this.email = props.email;
-    this.password = props.password;
+    this.email = props.email.toLowerCase();
+    this._password = props.password;
     this.role = props.role ?? UserRole.USER;
     this.createdAt = props.createdAt ?? new Date();
     this.lastLoggedIn = props.lastLoggedIn ?? new Date();
@@ -88,24 +79,15 @@ export class User {
     this.engagementScore = props.engagementScore ?? 0;
   }
 
-  updateProfile(params: {
-    name?: string;
-    lastname?: string;
-    email?: string;
-    role?: UserRole;
-    isEmailVerified?: boolean;
-  }): void {
-    if (params.name !== undefined) this.name = params.name;
-    if (params.lastname !== undefined) this.lastname = params.lastname;
-    if (params.email !== undefined) this.email = params.email;
-    if (params.role !== undefined) this.role = params.role;
-    if (params.isEmailVerified !== undefined) {
-      this.isEmailVerified = params.isEmailVerified;
-    }
+  // ✅ getter
+  get password(): string {
+    return this._password;
   }
 
+  // ✅ Auth behavior
   setPassword(hashedPassword: string): void {
-    this.password = hashedPassword;
+    if (!hashedPassword) throw new Error('Password cannot be empty');
+    this._password = hashedPassword;
   }
 
   setPasswordReset(token: string, expires: Date): void {
@@ -118,12 +100,26 @@ export class User {
     this.resetPasswordExpires = undefined;
   }
 
+  recordLogin(): void {
+    this.lastLoggedIn = new Date();
+  }
+
+  verifyEmail(): void {
+    this.isEmailVerified = true;
+    this.verificationToken = undefined;
+  }
+
+  changeRole(role: UserRole): void {
+    this.role = role;
+  }
+
+  // ✅ Business behavior
   rateProduct(productId: string, rating: number): boolean {
-    if (rating < 0 || rating > 5) {
-      throw new Error('امتیاز باید بین ۰ تا ۵ باشد.');
-    }
+    if (rating < 0 || rating > 5)
+      throw new Error('Rating must be between 0 and 5');
 
     const existing = this.ratings.find(r => r.productId === productId);
+
     if (existing) {
       existing.rating = rating;
       return false;
@@ -133,64 +129,64 @@ export class User {
     return true;
   }
 
-  toPlainObject(): Record<string, unknown> {
-    return {
-      _id: this.id,
-      id: this.id,
-      name: this.name,
-      lastname: this.lastname,
-      email: this.email,
-      password: this.password,
-      role: this.role,
-      createdAt: this.createdAt,
-      lastLoggedIn: this.lastLoggedIn,
-      recommendations: this.recommendations,
-      wishList: this.wishList,
-      ratings: this.ratings.map(r => ({
-        product: r.productId,
-        rating: r.rating,
-      })),
-      isEmailVerified: this.isEmailVerified,
-      verificationToken: this.verificationToken,
-      resetPasswordToken: this.resetPasswordToken,
-      resetPasswordExpires: this.resetPasswordExpires,
-      interactionHistory: this.interactionHistory,
-      preferredCategories: this.preferredCategories,
-      engagementScore: this.engagementScore,
-    };
+  addToWishlist(productId: string): void {
+    if (!this.wishList.includes(productId)) {
+      this.wishList.push(productId);
+    }
   }
 
-  static fromPersistence(data: any): User {
-    return new User({
-      id: data?._id?.toString?.() ?? data?.id ?? null,
-      name: data.name,
-      lastname: data.lastname,
-      email: data.email,
-      password: data.password,
-      role: data.role,
-      createdAt: data.createdAt,
-      lastLoggedIn: data.lastLoggedIn,
-      recommendations: (data.recommendations ?? []).map((id: any) =>
-        id?.toString?.() ?? id,
-      ),
-      wishList: (data.wishList ?? []).map((id: any) =>
-        id?.toString?.() ?? id,
-      ),
-      ratings: (data.ratings ?? []).map((r: any) => ({
-        productId: r.product?.toString?.() ?? r.productId?.toString?.() ?? r.product,
+  removeFromWishlist(productId: string): void {
+    this.wishList = this.wishList.filter(id => id !== productId);
+  }
+  // ✅ DB → Domain
+static fromPersistence(doc: any): User {
+  return new User({
+    id: doc._id?.toString(),
+    name: doc.name,
+    lastname: doc.lastname,
+    email: doc.email,
+    password: doc.password,
+    role: doc.role,
+    createdAt: doc.createdAt,
+    lastLoggedIn: doc.lastLoggedIn,
+    recommendations: doc.recommendations?.map((id: any) => id.toString()) ?? [],
+    wishList: doc.wishList?.map((id: any) => id.toString()) ?? [],
+    ratings:
+      doc.ratings?.map((r: any) => ({
+        productId: r.product.toString(),
         rating: r.rating,
-      })),
-      isEmailVerified: data.isEmailVerified,
-      verificationToken: data.verificationToken,
-      resetPasswordToken: data.resetPasswordToken,
-      resetPasswordExpires: data.resetPasswordExpires,
-      interactionHistory: (data.interactionHistory ?? []).map((i: any) => ({
-        productId: i.product?.toString?.() ?? i.productId?.toString?.() ?? i.product,
+      })) ?? [],
+    isEmailVerified: doc.isEmailVerified,
+    verificationToken: doc.verificationToken,
+    resetPasswordToken: doc.resetPasswordToken,
+    resetPasswordExpires: doc.resetPasswordExpires,
+    interactionHistory:
+      doc.interactionHistory?.map((i: any) => ({
+        productId: i.product.toString(),
         interactionType: i.interactionType,
         timestamp: i.timestamp,
-      })),
-      preferredCategories: data.preferredCategories ?? [],
-      engagementScore: data.engagementScore ?? 0,
-    });
-  }
+      })) ?? [],
+    preferredCategories: doc.preferredCategories ?? [],
+    engagementScore: doc.engagementScore ?? 0,
+  });
+}
+// ✅ Domain → API
+toPlainObject() {
+  return {
+    id: this.id,
+    name: this.name,
+    lastname: this.lastname,
+    email: this.email,
+    role: this.role,
+    createdAt: this.createdAt,
+    lastLoggedIn: this.lastLoggedIn,
+    recommendations: this.recommendations,
+    wishList: this.wishList,
+    ratings: this.ratings,
+    isEmailVerified: this.isEmailVerified,
+    preferredCategories: this.preferredCategories,
+    engagementScore: this.engagementScore,
+  };
+}
+
 }

@@ -1,9 +1,10 @@
-import { UserRepositoryPort } from "../../domain/repositories/user.repository.port";
-
+import { Inject } from "@nestjs/common";
+import { IUserRepository } from "src/users/domain/user.repository.port";
 export class ValidateResetTokenUseCase {
 
   constructor(
-    private readonly userRepo:UserRepositoryPort
+    @Inject('IUserRepository')
+    private readonly userRepo: IUserRepository,
   ){}
 
   async execute(token:string){

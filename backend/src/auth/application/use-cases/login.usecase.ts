@@ -1,12 +1,13 @@
 import { UnauthorizedException } from "@nestjs/common";
-import { UserRepositoryPort } from "../../domain/repositories/user.repository.port";
 import { PasswordHasherPort } from "../../domain/services/password-hasher.port";
 import { TokenProviderPort } from "../../domain/services/token-provider.port";
-
+import { Inject } from "@nestjs/common";
+import { IUserRepository } from "src/users/domain/user.repository.port";
 export class LoginUseCase {
 
   constructor(
-    private readonly userRepo:UserRepositoryPort,
+    @Inject('IUserRepository')
+    private readonly userRepo: IUserRepository,
     private readonly hasher:PasswordHasherPort,
     private readonly tokenProvider:TokenProviderPort
   ){}
@@ -26,19 +27,19 @@ export class LoginUseCase {
     }
 
     const token = this.tokenProvider.sign({
-      sub:user.id,
-      role:user.role,
-      email:user.email
-    })
+      sub: user.id!,
+      role: user.role,
+      email: user.email
+    });
 
     return {
-      access_token:token,
-      user:{
-        id:user.id,
-        email:user.email,
-        role:user.role
+      access_token: token,
+      user: {
+        id: user.id!,
+        email: user.email,
+        role: user.role
       }
-    }
+    };
 
   }
 

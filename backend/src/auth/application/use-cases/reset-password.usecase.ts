@@ -1,29 +1,33 @@
-import { BadRequestException } from "@nestjs/common";
-import { UserRepositoryPort } from "../../domain/repositories/user.repository.port";
-import { PasswordHasherPort } from "../../domain/services/password-hasher.port";
+import { BadRequestException, Inject } from '@nestjs/common';
+import { IUserRepository } from 'src/users/domain/user.repository.port';
+import { PasswordHasherPort } from '../../domain/services/password-hasher.port';
 
 export class ResetPasswordUseCase {
-
   constructor(
-    private readonly userRepo:UserRepositoryPort,
-    private readonly hasher:PasswordHasherPort
-  ){}
+    @Inject('IUserRepository')
+    private readonly userRepo: IUserRepository,
+    private readonly hasher: PasswordHasherPort,
+  ) {}
 
-  async execute(token:string,newPassword:string){
+  async execute(token: string, newPassword: string) {
+    const user = await this.userRepo.findByResetToken(token);
 
-    const user = await this.userRepo.findByResetToken(token)
-
-    if(!user){
-      throw new BadRequestException("Invalid token")
+    if (!user) {
+      throw new BadRequestException('Invalid token');
     }
 
-    const hashed = await this.hasher.hash(newPassword)
+    if (
+      !user.resetPasswordExpires ||
+      user.resetPasswordExpires < new Date()
+    ) {
+      throw new BadRequestException('Token expired');
+    }
 
-    user.changePassword(hashed)
+    const hashed = await this.hasher.hash(newPassword);
 
-    await this.userRepo.save(user)
+    user.setPassword(hashed);
+    user.clearPasswordReset();
 
+    await this.userRepo.update(user);
   }
-
 }
-س

@@ -1,36 +1,33 @@
-import { ConflictException } from "@nestjs/common";
-import { User, UserRole } from "../../domain/entities/user.entity";
-import { UserRepositoryPort } from "../../domain/repositories/user.repository.port";
-import { PasswordHasherPort } from "../../domain/services/password-hasher.port";
-import { v4 as uuid } from "uuid";
+import { ConflictException, Inject } from '@nestjs/common';
+import { v4 as uuid } from 'uuid';
+import { IUserRepository } from 'src/users/domain/user.repository.port';
+import { User, UserRole } from 'src/users/domain/user.entity';
+import { PasswordHasherPort } from '../../domain/services/password-hasher.port';
 
 export class RegisterUseCase {
-
   constructor(
-    private readonly userRepo: UserRepositoryPort,
+    @Inject('IUserRepository')
+    private readonly userRepo: IUserRepository,
     private readonly hasher: PasswordHasherPort,
   ) {}
 
-  async execute(name:string,email:string,password:string){
+  async execute(name: string, email: string, password: string) {
+    const exists = await this.userRepo.findByEmail(email);
 
-    const exists = await this.userRepo.findByEmail(email)
-
-    if(exists){
-      throw new ConflictException("User already exists")
+    if (exists) {
+      throw new ConflictException('User already exists');
     }
 
-    const hashed = await this.hasher.hash(password)
+    const hashed = await this.hasher.hash(password);
 
-    const user = new User(
-      uuid(),
+    const user = new User({
+      id: uuid(),
       name,
       email,
-      hashed,
-      UserRole.USER
-    )
+      password: hashed,
+      role: UserRole.USER,
+    });
 
-    return this.userRepo.save(user)
-
+    return this.userRepo.create(user);
   }
-
 }

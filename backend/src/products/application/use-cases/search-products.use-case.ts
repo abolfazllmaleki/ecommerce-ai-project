@@ -1,11 +1,8 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { Product } from '../../domain/product.entity';
 import { IProductRepository } from '../../domain/product.repository.port';
-import { SearchProductsDto } from '../../interfaces/product.dto'; // یک DTO جدید برای جستجو تعریف می‌کنیم
 import { Types } from 'mongoose'; // برای کار با ObjectId
 
-// فرض می‌کنیم این DTO برای پارامترهای جستجو داریم
-// src/products/interfaces/product.dto.ts
 export interface SearchProductsQuery {
   query?: string;
   minPrice?: number;
@@ -32,8 +29,6 @@ export class SearchProductsUseCase {
       }
     }
 
-    // 2. آماده‌سازی پارامترهای نهایی برای Repository (Repository خودش این کوئری‌ها رو می‌سازه)
-    // اگر Repository ما نیاز به پارامترهای خاصی دارد، اینجا آماده می‌کنیم
     const repoParams = {
       query: searchParams.query,
       minPrice: searchParams.minPrice,
@@ -44,18 +39,8 @@ export class SearchProductsUseCase {
       limit: searchParams.limit,
     };
 
-    // 3. فراخوانی متد مربوطه در Repository
-    // ما قبلا متد `search` رو در Repository پیاده نکردیم، ولی باید اونجا باشه
-    // یا متدهای جداگانه مثل getByCriteria رو صدا بزنیم
-    // فعلا فرض می‌کنیم متدی به نام `search` وجود دارد:
-    // return this.productRepository.search(repoParams);
-
-    // اگر بخواهیم با متدهای موجود پیاده کنیم (مثلا با فیلتر کردن دستی):
-    // این روش بهینه نیست و بهتر است Repository متد search اختصاصی داشته باشد
-    // فعلا برای تکمیل، یک فراخوانی ساده انجام می‌دهیم:
     const allProducts = await this.productRepository.findAll(); // این قسمت باید بهینه شود!
     
-    // فیلتر کردن دستی (این منطق باید در Repository یا Domain باشد)
     return allProducts.filter(product => {
         let match = true;
         if (searchParams.query && !product.name.toLowerCase().includes(searchParams.query.toLowerCase())) {
@@ -67,6 +52,5 @@ export class SearchProductsUseCase {
         // ... بقیه فیلترها
         return match;
     });
-    // **نکته مهم:** منطق فیلترینگ بالا باید به Repository منتقل شود تا جستجو در سمت دیتابیس انجام شود.
   }
 }

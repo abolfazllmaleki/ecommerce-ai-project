@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { UserSchema } from './schemas/user.schema';
+
 import { UsersController } from './interface/users.controller';
+
+import { UserSchema } from './schemas/user.schema';
 import { UserRepository } from './infrastructure/user.repository';
-import { ProductsModule } from '../products/products.module';
+import { ProductsModule } from 'src/products/products.module';
+
 import { CreateUserUseCase } from './application/use-cases/create-user.usecase';
 import { FindUserByEmailUseCase } from './application/use-cases/find-user-by-email.usecase';
 import { FindUserByIdUseCase } from './application/use-cases/find-user-by-id.usecase';
@@ -28,12 +31,18 @@ import { GetUserProductRatingUseCase } from './application/use-cases/get-user-pr
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: 'User', schema: UserSchema },
+    ]),
     ProductsModule,
   ],
   controllers: [UsersController],
   providers: [
-    { provide: 'IUserRepository', useClass: UserRepository },
+    {
+      provide: 'IUserRepository',
+      useClass: UserRepository,
+    },
+
     CreateUserUseCase,
     FindUserByEmailUseCase,
     FindUserByIdUseCase,
@@ -58,14 +67,13 @@ import { GetUserProductRatingUseCase } from './application/use-cases/get-user-pr
   ],
   exports: [
     'IUserRepository',
-    CreateUserUseCase,
     FindUserByEmailUseCase,
     FindUserByIdUseCase,
     UpdatePasswordUseCase,
     CreatePasswordResetTokenUseCase,
     ResetPasswordUseCase,
     FindUserByResetTokenUseCase,
-    GenerateRecommendationsUseCase,
   ],
 })
 export class UsersModule {}
+

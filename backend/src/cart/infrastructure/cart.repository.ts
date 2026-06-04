@@ -48,7 +48,7 @@ export class CartRepository implements ICartRepository {
 
     await doc.save();
     const populated = await this.model.populate(doc, { path: 'items.product' });
-    return populated.toObject() as Record<string, unknown>;
+return populated.toObject() as unknown as Record<string, unknown>;
   }
 
   async updateItemQuantity(
@@ -72,7 +72,7 @@ export class CartRepository implements ICartRepository {
     );
 
     const saved = await cart.save();
-    return saved.toObject() as Record<string, unknown>;
+return populated.toObject() as unknown as Record<string, unknown>;
   }
 
   async removeItem(userId: string, productId: string): Promise<Record<string, unknown>> {
@@ -92,6 +92,6 @@ export class CartRepository implements ICartRepository {
     );
 
     const saved = await cart.save();
-    return saved.toObject() as Record<string, unknown>;
+return populated.toObject() as unknown as Record<string, unknown>;
   }
 }
