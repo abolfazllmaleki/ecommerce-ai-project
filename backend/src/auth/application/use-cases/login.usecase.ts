@@ -8,8 +8,12 @@ export class LoginUseCase {
   constructor(
     @Inject('IUserRepository')
     private readonly userRepo: IUserRepository,
-    private readonly hasher:PasswordHasherPort,
-    private readonly tokenProvider:TokenProviderPort
+
+    @Inject('PasswordHasherPort')
+    private readonly hasher: PasswordHasherPort,
+
+    @Inject('TokenProviderPort')
+    private readonly tokenProvider: TokenProviderPort,
   ){}
 
   async execute(email:string,password:string){

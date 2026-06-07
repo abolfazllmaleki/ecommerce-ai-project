@@ -17,6 +17,7 @@ export class CartRepository implements ICartRepository {
       .findOne({ user: userId })
       .populate('items.product', 'name price images stock')
       .lean();
+
     return doc as Record<string, unknown> | null;
   }
 
@@ -44,11 +45,21 @@ export class CartRepository implements ICartRepository {
       price: item.price,
       addedAt: item.addedAt,
     })) as any;
+
     doc.total = cart.total;
 
-    await doc.save();
-    const populated = await this.model.populate(doc, { path: 'items.product' });
-return populated.toObject() as unknown as Record<string, unknown>;
+    const saved = await doc.save();
+
+    const populated = await this.model
+      .findById(saved._id)
+      .populate('items.product', 'name price images stock')
+      .lean();
+
+    if (!populated) {
+      throw new Error('CART_SAVE_FAILED');
+    }
+
+    return populated as Record<string, unknown>;
   }
 
   async updateItemQuantity(
@@ -56,42 +67,74 @@ return populated.toObject() as unknown as Record<string, unknown>;
     productId: string,
     quantity: number,
   ): Promise<Record<string, unknown>> {
-    const cart = await this.model
-      .findOneAndUpdate(
-        { user: userId, 'items.product': productId },
-        { $set: { 'items.$.quantity': quantity } },
-        { new: true },
-      )
-      .populate('items.product');
+    const cart = await this.model.findOne({
+      user: userId,
+      'items.product': productId,
+    });
 
-    if (!cart) throw new Error('CART_ITEM_NOT_FOUND');
+    if (!cart) {
+      throw new Error('CART_ITEM_NOT_FOUND');
+    }
+
+    const item = cart.items.find(
+      i => i.product.toString() === productId,
+    );
+
+    if (!item) {
+      throw new Error('CART_ITEM_NOT_FOUND');
+    }
+
+    item.quantity = quantity;
 
     cart.total = cart.items.reduce(
-      (sum, item) => sum + item.price * item.quantity,
+      (sum, current) => sum + current.price * current.quantity,
       0,
     );
 
     const saved = await cart.save();
-return populated.toObject() as unknown as Record<string, unknown>;
+
+    const populated = await this.model
+      .findById(saved._id)
+      .populate('items.product', 'name price images stock')
+      .lean();
+
+    if (!populated) {
+      throw new Error('CART_NOT_FOUND_AFTER_UPDATE');
+    }
+
+    return populated as Record<string, unknown>;
   }
 
-  async removeItem(userId: string, productId: string): Promise<Record<string, unknown>> {
-    const cart = await this.model
-      .findOneAndUpdate(
-        { user: userId },
-        { $pull: { items: { product: productId } } },
-        { new: true },
-      )
-      .populate('items.product');
+  async removeItem(
+    userId: string,
+    productId: string,
+  ): Promise<Record<string, unknown>> {
+    const cart = await this.model.findOne({ user: userId });
 
-    if (!cart) throw new Error('CART_NOT_FOUND');
+    if (!cart) {
+      throw new Error('CART_NOT_FOUND');
+    }
+
+    cart.items = cart.items.filter(
+      item => item.product.toString() !== productId,
+    ) as any;
 
     cart.total = cart.items.reduce(
-      (sum, item) => sum + item.price * item.quantity,
+      (sum, current) => sum + current.price * current.quantity,
       0,
     );
 
     const saved = await cart.save();
-return populated.toObject() as unknown as Record<string, unknown>;
+
+    const populated = await this.model
+      .findById(saved._id)
+      .populate('items.product', 'name price images stock')
+      .lean();
+
+    if (!populated) {
+      throw new Error('CART_NOT_FOUND_AFTER_REMOVE');
+    }
+
+    return populated as Record<string, unknown>;
   }
 }

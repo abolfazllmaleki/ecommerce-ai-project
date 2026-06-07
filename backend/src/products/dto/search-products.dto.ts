@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
-import { IsArray, IsIn, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsArray, IsIn, IsNumber, IsOptional, IsString, Min ,IsEnum} from 'class-validator';
+import { ProductSortBy } from '../domain/product.repository.port';
 
 export class SearchProductsDto {
   @IsOptional()
@@ -36,8 +37,8 @@ export class SearchProductsDto {
   categories?: string[];
 
   @IsOptional()
-  @IsString()
-  sortBy?: 'price-asc' | 'price-desc' | 'rating' | 'popularity' | string;
+  @IsEnum(['price-asc', 'price-desc', 'rating', 'newest'])
+  sortBy?: ProductSortBy;
 
   @IsOptional()
   @Transform(({ value }) => (value === undefined ? undefined : Number(value)))

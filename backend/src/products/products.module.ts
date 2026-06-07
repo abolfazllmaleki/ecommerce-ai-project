@@ -16,7 +16,7 @@ import { GetTopRatedProductsUseCase } from './application/use-cases/get-top-rate
 import { GetHighestDiscountProductsUseCase } from './application/use-cases/get-highest-discount-products.usecase';
 import { GetFeaturedProductsUseCase } from './application/use-cases/get-featured-products.usecase';
 import { GetPopularProductsUseCase } from './application/use-cases/get-popular-products.usecase';
-import { SearchProductsUseCase } from './application/use-cases/search-products.usecase';
+import { SearchProductsUseCase } from './application/use-cases/search-products.use-case';
 import { IncrementProductFieldUseCase } from './application/use-cases/increment-product-field.usecase';
 import { UpdateSimilarProductsUseCase } from './application/use-cases/update-similar-products.usecase';
 import { AddFeedbackKeywordsUseCase } from './application/use-cases/add-feedback-keywords.usecase';

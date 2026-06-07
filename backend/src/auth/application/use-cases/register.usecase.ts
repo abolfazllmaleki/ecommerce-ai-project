@@ -1,13 +1,16 @@
-import { ConflictException, Inject } from '@nestjs/common';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
 import { IUserRepository } from 'src/users/domain/user.repository.port';
 import { User, UserRole } from 'src/users/domain/user.entity';
 import { PasswordHasherPort } from '../../domain/services/password-hasher.port';
 
+@Injectable()
 export class RegisterUseCase {
   constructor(
     @Inject('IUserRepository')
     private readonly userRepo: IUserRepository,
+
+    @Inject('PasswordHasherPort')
     private readonly hasher: PasswordHasherPort,
   ) {}
 

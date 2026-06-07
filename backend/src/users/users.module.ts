@@ -73,6 +73,7 @@ import { GetUserProductRatingUseCase } from './application/use-cases/get-user-pr
     CreatePasswordResetTokenUseCase,
     ResetPasswordUseCase,
     FindUserByResetTokenUseCase,
+    GenerateRecommendationsUseCase
   ],
 })
 export class UsersModule {}

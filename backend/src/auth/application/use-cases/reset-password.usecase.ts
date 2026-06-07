@@ -6,7 +6,10 @@ export class ResetPasswordUseCase {
   constructor(
     @Inject('IUserRepository')
     private readonly userRepo: IUserRepository,
+
+    @Inject('PasswordHasherPort')
     private readonly hasher: PasswordHasherPort,
+
   ) {}
 
   async execute(token: string, newPassword: string) {
