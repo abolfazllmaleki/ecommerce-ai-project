@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
-import { RecommendationsController } from './recommendations.controller';
-import { RecommendationsService } from './recommendations.service';
+import { UsersModule } from '../users/users.module';
+import { RecommendationsController } from './interface/recommendations.controller';
+import { GetRecommendationsUseCase } from './application/use-cases/get-recommendations.usecase';
 
 @Module({
+  imports: [UsersModule],
   controllers: [RecommendationsController],
-  providers: [RecommendationsService]
+  providers: [GetRecommendationsUseCase],
 })
 export class RecommendationsModule {}

@@ -8,13 +8,13 @@ export class Product extends Document {
 
   @Prop({ index: 'text' })
   description: string;
-  
+
   @Prop({ index: 'text' })
   Specifications: string;
 
+  // جایگزین category: string
   @Prop({ type: Types.ObjectId, ref: 'Category', required: true })
   categoryId: Types.ObjectId;
-
 
   @Prop({ type: [String], default: [] })
   tags: string[];
@@ -30,7 +30,8 @@ export class Product extends Document {
 
   @Prop({ type: [String], default: [] })
   colors: string[];
-  
+
+  // جایگزین sizes: string
   @Prop({ type: [String], default: [] })
   sizes: string[];
 
@@ -74,12 +75,13 @@ export class Product extends Document {
   adminNote: string;
 }
 
+export type ProductDocument = Product & Document;
 export const ProductSchema = SchemaFactory.createForClass(Product);
 
-// Create text index for search functionality
+// Text index
 ProductSchema.index({ name: 'text', description: 'text', tags: 'text' });
 
-// Create compound index for better performance
+// Compound indexes
 ProductSchema.index({ categoryId: 1, price: 1, rating: 1 });
 ProductSchema.index({ price: 1, rating: 1 });
 ProductSchema.index({ views: -1, purchases: -1 });

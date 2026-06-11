@@ -1,7 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { Product } from '../../products/schemas/product.schema';
-import { User } from '../../users/schemas/user.schema';
 
 @Schema({ timestamps: true })
 export class Comment extends Document {
@@ -43,6 +41,8 @@ export class Comment extends Document {
 }
 
 export const CommentSchema = SchemaFactory.createForClass(Comment);
+
+export type CommentDocument = Comment & Document;
 
 CommentSchema.index({ productId: 1, createdAt: -1 });
 CommentSchema.index({ userId: 1, productId: 1 });

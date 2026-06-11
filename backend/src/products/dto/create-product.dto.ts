@@ -1,20 +1,54 @@
-import { Transform } from 'class-transformer';
-import { Types } from 'mongoose';
-export class CreateProductDto {
-  readonly name: string;
-  readonly description?: string;
+import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
-  @Transform(({ value }) => new Types.ObjectId(value))
-  readonly category: Types.ObjectId;
-  
-  readonly tags?: string[];
-  readonly price: number;
-  readonly stock?: number;
-  readonly brand?: string;
-  readonly images?: string[];
-  readonly discount?: number;
-  readonly similarProducts?: string[];
-  readonly featureWeights?: Record<string, number>;
-  readonly sizes?: string[];
-  readonly colors?: string[];
+export class CreateProductDto {
+  @IsString()
+  name: string;
+
+  @IsNumber()
+  @Min(0)
+  price: number;
+
+  @IsString()
+  categoryId: string;
+
+  @IsNumber()
+  @Min(0)
+  stock: number;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
+
+  @IsOptional()
+  @IsString()
+  brand?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  images?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  colors?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  sizes?: string[];
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  discount?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isFeatured?: boolean;
 }

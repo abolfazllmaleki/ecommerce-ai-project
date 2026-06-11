@@ -72,7 +72,8 @@ export interface Order {
   deliveredDate?: Date;
 }
 export interface Product {
-  _id: string;
+  _id?: string; 
+  id?: string;  
   name: string;
   description: string;
   // categoryId: any;
