@@ -55,7 +55,7 @@ const CheckoutPage = () => {
     try {
       // Prepare products array in the format expected by the backend
       const products = cart.map(item => ({
-        productId: item.product._id,
+        productId: item.product.id,
         quantity: item.quantity,
         price: item.product.price,
         name: item.product.name
@@ -63,8 +63,8 @@ const CheckoutPage = () => {
 
       // Prepare order data matching the CreateOrderDto interface
       const orderData = {
-        userId: user?._id,
-        products,
+        userId: user?.id,
+        products:products,
         totalPrice: orderTotal,
         shippingAddress: {
           firstName: formData.firstName,

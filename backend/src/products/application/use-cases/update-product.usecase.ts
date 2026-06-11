@@ -15,7 +15,7 @@ async execute(id: string, dto: UpdateProductDto): Promise<Product> {
     name: dto.name,
     description: dto.description,
     brand: dto.brand,
-    categoryId: dto.category,
+    categoryId: dto.categoryId,
     tags: dto.tags,
     images: dto.images,
     colors: dto.colors,

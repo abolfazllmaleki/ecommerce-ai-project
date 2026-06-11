@@ -14,7 +14,7 @@ async execute(dto: CreateProductDto): Promise<Product> {
   const product = new Product({
     name: dto.name,
     price: dto.price,
-    categoryId: dto.category,
+    categoryId: dto.categoryId,
     stock: dto.stock,
     description: dto.description,
     tags: dto.tags ?? [],

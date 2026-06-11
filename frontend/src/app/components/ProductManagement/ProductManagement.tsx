@@ -8,35 +8,30 @@ import ProductTable from '../ProductTable/ProductTable';
 
 const API_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL}/products`;
 
+type ProductWithOptionalId = Product & {
+  id?: string;
+  _id?: string;
+};
+
 const ProductManagement = () => {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductWithOptionalId[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
-    outOfStock: 0
+    outOfStock: 0,
   });
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get<Product[]>(API_URL);
-      setProducts(response.data);
-      
-      setStats({
-        total: response.data.length,
-        active: response.data.filter(p => p.stock > 0).length,
-        outOfStock: response.data.filter(p => p.stock === 0).length
-      });
-      
-      showSuccess('Products loaded successfully');
-    } catch (err) {
-      showError('Failed to fetch products');
-    } finally {
-      setLoading(false);
-    }
+  const getProductId = (product: ProductWithOptionalId) => product._id || product.id || '';
+
+  const updateStats = (items: ProductWithOptionalId[]) => {
+    setStats({
+      total: items.length,
+      active: items.filter((p) => p.stock > 0).length,
+      outOfStock: items.filter((p) => p.stock === 0).length,
+    });
   };
 
   const showError = (message: string) => {
@@ -49,71 +44,108 @@ const ProductManagement = () => {
     setTimeout(() => setSuccess(null), 5000);
   };
 
+  const normalizeProduct = (product: ProductWithOptionalId): ProductWithOptionalId => {
+    return {
+      ...product,
+      _id: product._id || product.id || '',
+    };
+  };
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+
+      const response = await axios.get<ProductWithOptionalId[]>(API_URL);
+      const normalizedProducts = response.data.map(normalizeProduct);
+
+      setProducts(normalizedProducts);
+      updateStats(normalizedProducts);
+      showSuccess('Products loaded successfully');
+    } catch (err) {
+      showError('Failed to fetch products');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  // const handleAddProduct = async (newProduct: Product) => {
-  //   try {
-  //     const response = await axios.post<Product>(API_URL, newProduct);
-  //     setProducts(prev => [...prev, response.data]);
-  //     showSuccess('Product added successfully');
-  //   } catch (err) {
-  //     showError('Failed to add product');
-  //   }
-  // };
-
-  // const handleUpdateProduct = async (updatedProduct: Product) => {
-  //   try {
-  //     const response = await axios.put<Product>(
-  //       `${API_URL}/${updatedProduct._id}`,
-  //       updatedProduct
-  //     );
-  //     setProducts(prev => prev.map(p => p._id === updatedProduct._id ? response.data : p));
-  //     showSuccess('Product updated successfully');
-  //   } catch (err) {
-  //     showError('Failed to update product');
-  //   }
-  // };
   const handleAddProduct = async (newProduct: Product) => {
-  try {
-    // Ensure category is sent as object ID string
-    const productToSend = {
-      ...newProduct,
-      category: newProduct.category // This should be the category ID string
-    };
-    
-    const response = await axios.post<Product>(API_URL, productToSend);
-    setProducts(prev => [...prev, response.data]);
-    showSuccess('Product added successfully');
-  } catch (err) {
-    showError('Failed to add product');
-  }
-};
+    try {
+      const productToSend = {
+        ...newProduct,
+        category: newProduct.category,
+      };
 
-const handleUpdateProduct = async (updatedProduct: Product) => {
-  try {
-    // Ensure category is sent as object ID string
-    const productToSend = {
-      ...updatedProduct,
-      category: updatedProduct.category // This should be the category ID string
-    };
-    
-    const response = await axios.put<Product>(
-      `${API_URL}/${updatedProduct._id}`,
-      productToSend
-    );
-    setProducts(prev => prev.map(p => p._id === updatedProduct._id ? response.data : p));
-    showSuccess('Product updated successfully');
-  } catch (err) {
-    showError('Failed to update product');
-  }
-};
+      const response = await axios.post<ProductWithOptionalId>(API_URL, productToSend);
+      const createdProduct = normalizeProduct(response.data);
+
+      setProducts((prev) => {
+        const updated = [...prev, createdProduct];
+        updateStats(updated);
+        return updated;
+      });
+
+      showSuccess('Product added successfully');
+    } catch (err) {
+      showError('Failed to add product');
+    }
+  };
+
+  const handleUpdateProduct = async (updatedProduct: Product) => {
+    try {
+      const productToSend = {
+        ...updatedProduct,
+        category: updatedProduct.category,
+      };
+
+      const productId =
+        (updatedProduct as ProductWithOptionalId)._id ||
+        (updatedProduct as ProductWithOptionalId).id;
+
+      if (!productId) {
+        showError('Product ID is missing for update');
+        return;
+      }
+
+      const response = await axios.put<ProductWithOptionalId>(
+        `${API_URL}/${productId}`,
+        productToSend
+      );
+
+      const normalizedUpdatedProduct = normalizeProduct(response.data);
+
+      setProducts((prev) => {
+        const updated = prev.map((p) =>
+          getProductId(p) === productId ? normalizedUpdatedProduct : p
+        );
+        updateStats(updated);
+        return updated;
+      });
+
+      showSuccess('Product updated successfully');
+    } catch (err) {
+      showError('Failed to update product');
+    }
+  };
 
   const handleDeleteProduct = async (productId: string) => {
     try {
+      if (!productId) {
+        showError('Product ID is missing for delete');
+        return;
+      }
+
       await axios.delete(`${API_URL}/${productId}`);
-      setProducts(prev => prev.filter(p => p._id !== productId));
+
+      setProducts((prev) => {
+        const updated = prev.filter((p) => getProductId(p) !== productId);
+        updateStats(updated);
+        return updated;
+      });
+
       showSuccess('Product deleted successfully');
     } catch (err) {
       showError('Failed to delete product');
@@ -191,7 +223,10 @@ const handleUpdateProduct = async (updatedProduct: Product) => {
           <div className="flex-1">
             <p className="text-green-700 font-medium">{success}</p>
           </div>
-          <button onClick={() => setSuccess(null)} className="text-green-500 hover:text-green-700">
+          <button
+            onClick={() => setSuccess(null)}
+            className="text-green-500 hover:text-green-700"
+          >
             &times;
           </button>
         </div>
@@ -217,6 +252,7 @@ const handleUpdateProduct = async (updatedProduct: Product) => {
               {products.length} items
             </span>
           </div>
+
           <div className="p-1">
             {loading ? (
               <div className="flex flex-col items-center justify-center py-12 space-y-4">
@@ -225,7 +261,7 @@ const handleUpdateProduct = async (updatedProduct: Product) => {
               </div>
             ) : (
               <ProductTable
-                products={products}
+                products={products as Product[]}
                 onUpdate={handleUpdateProduct}
                 onDelete={handleDeleteProduct}
               />
@@ -245,6 +281,7 @@ const handleUpdateProduct = async (updatedProduct: Product) => {
             transform: translateY(0);
           }
         }
+
         .animate-fade-in-up {
           animation: fadeInUp 0.3s ease-out forwards;
         }

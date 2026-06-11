@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Product, Category } from "../types/types";
@@ -10,7 +10,6 @@ import { CategoryFilter } from "../components/CategoryFilter/CategoryFilter";
 import { ProductList } from "../components/ProductList/ProductList";
 import { productService } from "@/services/api";
 import { FiFilter, FiX, FiLoader } from "react-icons/fi";
-import { useCallback } from "react";
 
 const SearchComponent = () => {
   const searchParams = useSearchParams();
@@ -24,45 +23,58 @@ const SearchComponent = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [error, setError] = useState("");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
+  // Normalize API response to Product[]
+  const normalizeProductsResponse = (data: any): Product[] => {
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.items)) return data.items;
+    if (Array.isArray(data?.products)) return data.products;
+    if (Array.isArray(data?.data)) return data.data;
+    return [];
+  };
+
+  // Sync URL query param with search state
   useEffect(() => {
     const query = searchParams.get("query") || "";
     setSearchQuery(query);
-    console.log('Initial search query from URL:', query);
+    console.log("Initial search query from URL:", query);
   }, [searchParams]);
 
-  // Separate effect for initial data loading
+  // Load categories once
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        setLoading(true);
+        setCategoriesLoading(true);
         const categoriesData = await productService.getCategories();
-        setCategories(categoriesData || []);
-        console.log('Initial categories loaded:', categoriesData);
+        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+        console.log("Initial categories loaded:", categoriesData);
       } catch (err) {
-        console.error('Error loading initial categories:', err);
+        console.error("Error loading initial categories:", err);
         setError("Error loading categories");
       } finally {
-        setLoading(false);
+        setCategoriesLoading(false);
       }
     };
 
     loadInitialData();
-  }, []); // Only run once on mount
+  }, []);
 
+  // Fetch products when filters change
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError("");
         setPage(1);
         setHasMore(true);
-        
-        console.log('Fetching data with params:', {
+
+        const requestParams = {
           query: searchQuery,
           minPrice: priceRange[0],
           maxPrice: priceRange[1],
@@ -71,135 +83,118 @@ const SearchComponent = () => {
           sortBy,
           page: 1,
           limit: 20,
-        });
+        };
 
-        const [productsData, categoriesData] = await Promise.all([
-          productService.searchProducts({
-            query: searchQuery,
-            minPrice: priceRange[0],
-            maxPrice: priceRange[1],
-            minRating,
-            categories: selectedCategories,
-            sortBy,
-            page: 1,
-            limit: 20,
-          }),
-          productService.getCategories(),
-        ]);
-        
-        console.log('Products data:', productsData);
-        console.log('Categories data:', categoriesData);
-        
-        setProducts(productsData || []);
-        setCategories(categoriesData || []);
-        setError("");
+        console.log("Fetching data with params:", requestParams);
+
+        const productsData = await productService.searchProducts(requestParams);
+
+        console.log("Products data:", productsData);
+        console.log("Is productsData array?", Array.isArray(productsData));
+
+        const normalizedProducts = normalizeProductsResponse(productsData);
+
+        console.log("Normalized products:", normalizedProducts);
+
+        setProducts(normalizedProducts);
+        setHasMore(normalizedProducts.length === 20);
       } catch (err) {
-        console.error('Search error:', err);
-        setError("Error fetching products: " + (err.message || 'Unknown error'));
+        console.error("Search error:", err);
+        const message =
+          err instanceof Error ? err.message : "Unknown error";
+        setError("Error fetching products: " + message);
         setProducts([]);
       } finally {
         setLoading(false);
       }
     };
 
-    // Only search if there's a query or filters are applied
-    if (searchQuery.trim() || selectedCategories.length > 0 || minRating > 0 || priceRange[0] > 0 || priceRange[1] < 10000) {
-      const debounceTimer = setTimeout(() => {
-        fetchData();
-      }, 500); // Reduced debounce time for better UX
+    const debounceTimer = setTimeout(() => {
+      fetchData();
+    }, 500);
 
-      return () => clearTimeout(debounceTimer);
-    } else {
-      // If no search query and no filters, show all products
-      const fetchAllProducts = async () => {
-        try {
-          setLoading(true);
-          const [productsData, categoriesData] = await Promise.all([
-            productService.searchProducts({
-              query: '',
-              page: 1,
-              limit: 20,
-            }),
-            productService.getCategories(),
-          ]);
-          
-          setProducts(productsData || []);
-          setCategories(categoriesData || []);
-          setError("");
-        } catch (err) {
-          console.error('Fetch all products error:', err);
-          setError("Error fetching products");
-          setProducts([]);
-        } finally {
-          setLoading(false);
-        }
-      };
-      
-      fetchAllProducts();
-    }
+    return () => clearTimeout(debounceTimer);
   }, [searchQuery, priceRange, minRating, selectedCategories, sortBy]);
 
-  // const toggleCategory = (categoryId: string) => {
-  //   console.log("catid",categoryId)
-  //   setSelectedCategories(prev =>
-  //     prev.includes(categoryId)
-  //       ? prev.filter(id => id !== categoryId)
-  //       : [...prev, categoryId]
-  //   );
-  // };
   const toggleCategory = useCallback((categoryId: string) => {
-  setSelectedCategories(prev =>
-    prev.includes(categoryId)
-      ? prev.filter(id => id !== categoryId)
-      : [...prev, categoryId]
-  );
-}, []);
+    setSelectedCategories((prev) =>
+      prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  }, []);
 
-  // const loadMoreProducts = async () => {
-  //   setIsLoadingMore(true);
-    
-  //   try {
-  //     const moreProducts = await productService.searchProducts({
-  //       query: searchQuery,
-  //       minPrice: priceRange[0],
-  //       maxPrice: priceRange[1],
-  //       minRating,
-  //       categories: selectedCategories,
-  //       sortBy,
-  //       page: page + 1,
-  //       limit: 20,
-  //     });
-  //     console.log("Requesting page:", page + 1);
-  //     console.log(moreProducts)
+  // Optional load more
+  const loadMoreProducts = useCallback(async () => {
+    if (isLoadingMore || !hasMore) return;
 
+    try {
+      setIsLoadingMore(true);
 
-  //     if (moreProducts.length === 0) {
-  //       setHasMore(false);
-  //     } else {
-  //       setProducts(prev => [...prev, ...moreProducts]);
-  //       setPage(prev => prev + 1);
-  //     }
-  //   } catch (err) {
-  //     setError("Error loading more products.");
-  //   } finally {
-  //     setIsLoadingMore(false);
-  //   }
-  // };
+      const nextPage = page + 1;
 
+      const moreProductsData = await productService.searchProducts({
+        query: searchQuery,
+        minPrice: priceRange[0],
+        maxPrice: priceRange[1],
+        minRating,
+        categories: selectedCategories,
+        sortBy,
+        page: nextPage,
+        limit: 20,
+      });
+
+      const normalizedMoreProducts = normalizeProductsResponse(moreProductsData);
+
+      console.log("Requesting page:", nextPage);
+      console.log("More products:", normalizedMoreProducts);
+
+      if (normalizedMoreProducts.length === 0) {
+        setHasMore(false);
+      } else {
+        setProducts((prev) => [...prev, ...normalizedMoreProducts]);
+        setPage(nextPage);
+        if (normalizedMoreProducts.length < 20) {
+          setHasMore(false);
+        }
+      }
+    } catch (err) {
+      console.error("Load more error:", err);
+      setError("Error loading more products.");
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [
+    isLoadingMore,
+    hasMore,
+    page,
+    searchQuery,
+    priceRange,
+    minRating,
+    selectedCategories,
+    sortBy,
+  ]);
+
+  // Infinite scroll
   useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.scrollY;
       const windowHeight = window.innerHeight;
       const fullHeight = document.body.scrollHeight;
 
-      // if (scrollTop + windowHeight >= fullHeight - 300 && !isLoadingMore && hasMore) {
-      //   loadMoreProducts();
-      // }
+      if (
+        scrollTop + windowHeight >= fullHeight - 300 &&
+        !isLoadingMore &&
+        hasMore &&
+        !loading
+      ) {
+        loadMoreProducts();
+      }
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [isLoadingMore, hasMore]);
+  }, [isLoadingMore, hasMore, loading, loadMoreProducts]);
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -234,11 +229,17 @@ const SearchComponent = () => {
             sortBy={sortBy}
             setSortBy={setSortBy}
           />
-          <CategoryFilter
-            categories={categories}
-            selectedCategories={selectedCategories}
-            toggleCategory={toggleCategory}
-          />
+          {categoriesLoading ? (
+            <div className="flex justify-center py-6">
+              <FiLoader className="animate-spin text-2xl text-gray-500" />
+            </div>
+          ) : (
+            <CategoryFilter
+              categories={categories}
+              selectedCategories={selectedCategories}
+              toggleCategory={toggleCategory}
+            />
+          )}
         </div>
 
         <div className="lg:col-span-3">
@@ -286,11 +287,19 @@ const SearchComponent = () => {
               sortBy={sortBy}
               setSortBy={setSortBy}
             />
-            <CategoryFilter
-              categories={categories}
-              selectedCategories={selectedCategories}
-              toggleCategory={toggleCategory}
-            />
+
+            {categoriesLoading ? (
+              <div className="flex justify-center py-6">
+                <FiLoader className="animate-spin text-2xl text-gray-500" />
+              </div>
+            ) : (
+              <CategoryFilter
+                categories={categories}
+                selectedCategories={selectedCategories}
+                toggleCategory={toggleCategory}
+              />
+            )}
+
             <button
               onClick={() => setMobileFiltersOpen(false)}
               className="w-full mt-6 bg-blue-600 text-white py-2 rounded"

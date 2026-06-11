@@ -21,8 +21,10 @@ export const ProductList = ({ products }: ProductListProps) => {
 
         return (
           <ItemCard
-            id={product._id}
-            key={product._id}
+            // id={product._id}
+            // key={product._id}
+              id={product.id}
+              key={product.id}
             image={product.images[0]} // Use first image from array
             name={product.name}
             currentPrice={product.price}

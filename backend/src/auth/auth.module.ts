@@ -13,6 +13,7 @@ import { UsersModule } from '../users/users.module';
 import { BcryptService } from './infrastructure/services/bcrypt.service';
 import { JwtTokenService } from './infrastructure/services/jwt-token.service';
 import { RecaptchaService } from './infrastructure/services/recaptcha.service';
+import { ValidateResetTokenUseCase } from './application/use-cases/validate-reset-token.usecase';
 
 import { RegisterUseCase } from './application/use-cases/register.usecase';
 import { LoginUseCase } from './application/use-cases/login.usecase';
@@ -45,6 +46,7 @@ import { ResetPasswordUseCase } from './application/use-cases/reset-password.use
 
     LocalStrategy,
     JwtStrategy,
+    ValidateResetTokenUseCase,
 
     {
       provide: 'PasswordHasherPort',
