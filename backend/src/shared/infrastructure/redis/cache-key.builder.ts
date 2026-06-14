@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import { CACHE_APP_PREFIX, CACHE_HASH_LENGTH } from './cache.constants';
 import { CacheNamespace } from './cache.namespaces';
 
