@@ -42,4 +42,9 @@ export class RedisCacheAdapter implements CachePort {
   async delete(key: string): Promise<void> {
     await this.redis.del(key);
   }
+
+  async increment(key: string): Promise<number> {
+    return this.redis.incr(key);
+  }
+
 }

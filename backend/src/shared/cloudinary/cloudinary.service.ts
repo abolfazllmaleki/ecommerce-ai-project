@@ -18,7 +18,7 @@ export class CloudinaryService {
           folder: 'products',
           resource_type: 'image',
           transformation: [
-            { width: 1000, height: 1000, crop: 'limit' }, // جلوگیری از عکس خیلی بزرگ
+            { width: 1000, height: 1000, crop: 'limit' }, 
             { quality: 'auto' },
             { fetch_format: 'auto' },
           ],

@@ -13,4 +13,7 @@ export interface CachePort {
   ): Promise<void>;
 
   delete(key: string): Promise<void>;
+
+  increment(key: string): Promise<number>;
+
 }
