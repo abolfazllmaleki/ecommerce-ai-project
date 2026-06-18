@@ -303,4 +303,30 @@ export class Product {
       updatedAt: data.updatedAt,
     });
   }
+  static rehydrate(data: any): Product {
+  return new Product({
+    id: data.id ?? null,
+    name: data.name,
+    description: data.description,
+    categoryId: data.categoryId,
+    tags: data.tags ?? [],
+    price: data.price,
+    stock: data.stock,
+    brand: data.brand,
+    images: data.images ?? [],
+    colors: data.colors ?? [],
+    sizes: data.sizes ?? [],
+    rating: data.rating ?? 0,
+    numberOfReviews: data.numberOfReviews ?? 0,
+    views: data.views ?? 0,
+    purchases: data.purchases ?? 0,
+    wishlistAdds: data.wishlistAdds ?? 0,
+    discount: data.discount ?? 0,
+    isFeatured: data.isFeatured ?? false,
+    similarProducts: data.similarProducts ?? [],
+    userFeedbackKeywords: data.userFeedbackKeywords ?? [],
+    createdAt: data.createdAt ? new Date(data.createdAt) : undefined,
+    updatedAt: data.updatedAt ? new Date(data.updatedAt) : undefined,
+  });
+}
 }

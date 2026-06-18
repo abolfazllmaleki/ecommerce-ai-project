@@ -3,13 +3,13 @@ import { Document, Types } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class Product extends Document {
-  @Prop({ required: true, unique: true, index: 'text' })
+  @Prop({ required: true, unique: true })
   name: string;
 
-  @Prop({ index: 'text' })
+  @Prop()
   description: string;
 
-  @Prop({ index: 'text' })
+  @Prop()
   Specifications: string;
 
   // جایگزین category: string
@@ -79,7 +79,24 @@ export type ProductDocument = Product & Document;
 export const ProductSchema = SchemaFactory.createForClass(Product);
 
 // Text index
-ProductSchema.index({ name: 'text', description: 'text', tags: 'text' });
+ProductSchema.index(
+  {
+    name: 'text',
+    description: 'text',
+    tags: 'text',
+    brand: 'text',
+  },
+  {
+    weights: {
+      name: 5,
+      brand: 4,
+      tags: 3,
+      description: 1,
+    },
+    name: 'ProductTextIndex',
+  },
+);
+
 
 // Compound indexes
 ProductSchema.index({ categoryId: 1, price: 1, rating: 1 });

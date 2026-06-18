@@ -20,16 +20,18 @@ import { SearchProductsUseCase } from './application/use-cases/search-products.u
 import { IncrementProductFieldUseCase } from './application/use-cases/increment-product-field.usecase';
 import { UpdateSimilarProductsUseCase } from './application/use-cases/update-similar-products.usecase';
 import { AddFeedbackKeywordsUseCase } from './application/use-cases/add-feedback-keywords.usecase';
-
+import { RedisModule } from '../shared/infrastructure/redis/redis.module';
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: 'Product', schema: ProductSchema }]),
+    MongooseModule.forFeature([{ name: 'Product', schema: ProductSchema }]),RedisModule
+    
+    
+  
   ],
   controllers: [ProductsController],
   providers: [
     // bind interface -> implementation
     { provide: 'IProductRepository', useClass: ProductRepository },
-
     // use cases
     CreateProductUseCase,
     FindAllProductsUseCase,

@@ -1,12 +1,46 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IProductRepository } from '../../domain/product.repository.port';
 import { Product } from '../../domain/product.entity';
+import { CachePort,CACHE_PORT} from '../../../shared/application/ports/cache.port';
+import { CacheVersionService } from '../../../shared/infrastructure/redis/cache-version.service';
+import { CacheKeyBuilder } from '../../../shared/infrastructure/redis/cache-key.builder';
+import { CacheNamespaces } from '../../../shared/infrastructure/redis/cache.namespaces';
 
 @Injectable()
 export class GetTopRatedProductsUseCase {
-  constructor(@Inject('IProductRepository') private readonly repo: IProductRepository) {}
+  constructor(
+    @Inject('IProductRepository')
+    private readonly repo: IProductRepository,
 
-  execute(limit = 6): Promise<Product[]> {
-    return this.repo.getTopRated(limit);
+    @Inject(CACHE_PORT)
+    private readonly cache: CachePort,
+
+    private readonly versionService: CacheVersionService,
+  ) {}
+
+  async execute(limit = 6): Promise<Product[]> {
+    const version = await this.versionService.getProductsVersion();
+
+    const cacheKey = CacheKeyBuilder.build(
+      CacheNamespaces.PRODUCT_LIST_TOP_RATED,
+      version,
+ { limit },    );
+
+    const cached = await this.cache.get<any[]>(cacheKey);
+
+    if (cached) {
+      return cached.map(p => Product.rehydrate(p));
+    }
+
+    const products = await this.repo.getTopRated(limit);
+
+    await this.cache.set(
+      cacheKey,
+      products.map(p => p.toPlainObject()),
+      { ttlSeconds: 300 },
+    );
+
+    return products;
   }
 }
+

@@ -4,6 +4,10 @@ import {
   ProductSortBy,
   PaginatedProducts,
 } from '../../domain/product.repository.port';
+import { CacheKeyBuilder } from '../../../shared/infrastructure/redis/cache-key.builder';
+import { CacheNamespaces } from '../../../shared/infrastructure/redis/cache.namespaces';
+import { CachePort, CACHE_PORT } from '../../../shared/application/ports/cache.port';
+import { CacheVersionService } from '../../../shared/infrastructure/redis/cache-version.service';
 
 export interface SearchProductsQuery {
   query?: string;
@@ -21,13 +25,43 @@ export class SearchProductsUseCase {
   constructor(
     @Inject('IProductRepository')
     private readonly productRepository: IProductRepository,
+
+    @Inject(CACHE_PORT)
+    private readonly cache: CachePort,
+
+    private readonly versionService: CacheVersionService,
   ) {}
 
   async execute(params: SearchProductsQuery): Promise<PaginatedProducts> {
-    if (params.minPrice && params.maxPrice && params.minPrice > params.maxPrice) {
+    if (
+      params.minPrice !== undefined &&
+      params.maxPrice !== undefined &&
+      params.minPrice > params.maxPrice
+    ) {
       throw new BadRequestException('minPrice cannot be greater than maxPrice');
     }
 
-    return this.productRepository.search(params);
+    const version = await this.versionService.getProductsVersion();
+
+    const cacheKey = CacheKeyBuilder.build(
+      CacheNamespaces.PRODUCTS_LIST,
+      version,
+      params as Record<string, unknown>
+    );
+
+    const cached = await this.cache.get<PaginatedProducts>(cacheKey);
+
+    if (cached) {
+      return cached;
+    }
+
+    const result = await this.productRepository.search(params);
+
+    await this.cache.set(cacheKey, result, {
+      ttlSeconds: 120,
+    });
+
+    return result;
   }
 }
+

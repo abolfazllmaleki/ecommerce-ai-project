@@ -234,26 +234,114 @@ const getCategoryName = (categoryId: string) => {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+//   const handleSubmit = async (e: React.FormEvent) => {
+//     e.preventDefault();
     
-    const imagePromises = tempImages.map((file) => {
-      return new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-      });
-    });
+//     // const imagePromises = tempImages.map((file) => {
+//     //   return new Promise<string>((resolve) => {
+//     //     const reader = new FileReader();
+//     //     reader.onload = () => resolve(reader.result as string);
+//     //     reader.readAsDataURL(file);
+//     //   });
+//     // });
+//     const formData = new FormData();
 
-    const newImages = await Promise.all(imagePromises);
-    const allImages = [...(editingProduct?.images || []), ...newImages].slice(0, 3);
+//         tempImages.forEach((file) => {
+//           formData.append("images", file);
+//         });
+
+//         const uploadRes = await fetch(
+//           `${process.env.NEXT_PUBLIC_BACKEND_URL}/upload/images`,
+//           {
+//             method: "POST",
+//             body: formData,
+//           }
+//         );
+
+//         const uploadedUrls = await uploadRes.json();
+
+//     // const newImages = await Promise.all(imagePromises);
+//     // const allImages = [...(editingProduct?.images || []), ...newImages].slice(0, 3);
+//     console.log("UPLOAD RESPONSE:", data);
+//     console.log("uploadedUrls:", uploadedUrls);
+
+
+//     const allImages = [...(editingProduct?.images || []), ...uploadedUrls].slice(0, 3);
+
+// onSubmit({
+//   ...newProduct,
+//   images: allImages,
+// });
+
+//     onSubmit({
+//       ...newProduct,
+//       images: allImages,
+//     });
+
+//     // Only reset if not in edit mode
+//     if (!editingProduct) {
+//       setNewProduct({
+//         name: '',
+//         price: 0,
+//         discount: 0,
+//         stock: 0,
+//         sizes: [],
+//         colors: [],
+//         images: [],
+//         description: '',
+//         specifications: '',
+//         adminNote: '',
+//         category: '',
+//         brand: '',
+//         tags: [],
+//         details: [],
+//       });
+//       setTempImages([]);
+//       setTempTag('');
+//     }
+//   };
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  try {
+    let uploadedUrls: string[] = [];
+
+    if (tempImages.length > 0) {
+      const formData = new FormData();
+
+      tempImages.forEach((file) => {
+        formData.append("images", file);
+      });
+
+      const uploadRes = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/upload/images`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      if (!uploadRes.ok) {
+        throw new Error("Image upload failed");
+      }
+
+      const data = await uploadRes.json();
+      uploadedUrls = Array.isArray(data.images) ? data.images : [];
+
+      console.log("UPLOAD RESPONSE:", data);
+    }
+
+    const allImages = [
+      ...(editingProduct?.images || []),
+      ...uploadedUrls,
+    ].slice(0, 3);
 
     onSubmit({
       ...newProduct,
       images: allImages,
     });
 
-    // Only reset if not in edit mode
+    // reset form when creating
     if (!editingProduct) {
       setNewProduct({
         name: '',
@@ -266,15 +354,20 @@ const getCategoryName = (categoryId: string) => {
         description: '',
         specifications: '',
         adminNote: '',
-        category: '',
+        categoryId: '',
         brand: '',
         tags: [],
         details: [],
       });
+
       setTempImages([]);
       setTempTag('');
     }
-  };
+
+  } catch (error) {
+    console.error("Submit error:", error);
+  }
+};
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);

@@ -5,7 +5,7 @@ import { ProductSortBy } from '../domain/product.repository.port';
 export class SearchProductsDto {
   @IsOptional()
   @IsString()
-  q?: string;
+  query?: string;
 
   @IsOptional()
   @Transform(({ value }) => (value === undefined ? undefined : Number(value)))
@@ -37,7 +37,7 @@ export class SearchProductsDto {
   categories?: string[];
 
   @IsOptional()
-  @IsEnum(['price-asc', 'price-desc', 'rating', 'newest'])
+  @IsEnum(['price-asc', 'price-desc', 'rating', 'newest','popularity','rating'])
   sortBy?: ProductSortBy;
 
   @IsOptional()
