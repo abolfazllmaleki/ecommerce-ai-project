@@ -32,7 +32,6 @@ import { RedisModule } from '../shared/infrastructure/redis/redis.module';
   providers: [
     // bind interface -> implementation
     { provide: 'IProductRepository', useClass: ProductRepository },
-
     // use cases
     CreateProductUseCase,
     FindAllProductsUseCase,

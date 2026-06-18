@@ -17,6 +17,9 @@ export class ProductRepository implements IProductRepository {
   constructor(
     @InjectModel('Product')
     private readonly model: Model<ProductDocument>,
+
+
+
   ) {}
 
   async create(product: ProductEntity): Promise<ProductEntity> {
@@ -25,6 +28,8 @@ export class ProductRepository implements IProductRepository {
     const saved = await created.save();
     return ProductMapper.toDomain(saved);
   }
+
+
 
   async findById(id: string): Promise<ProductEntity | null> {
     if (!Types.ObjectId.isValid(id)) return null;
@@ -52,12 +57,17 @@ export class ProductRepository implements IProductRepository {
     return updated ? ProductMapper.toDomain(updated) : null;
   }
 
+
+
+
   async delete(id: string): Promise<boolean> {
     if (!Types.ObjectId.isValid(id)) return false;
 
     const result = await this.model.findByIdAndDelete(id).exec();
     return !!result;
   }
+
+
 
   async getTopRated(limit: number): Promise<ProductEntity[]> {
     const docs = await this.model
@@ -98,74 +108,113 @@ export class ProductRepository implements IProductRepository {
     return docs.map(doc => ProductMapper.toDomain(doc));
   }
 
-  async search(criteria: SearchCriteria): Promise<PaginatedProducts> {
-    const filter: FilterQuery<ProductDocument> = {};
-    const page = Math.max(criteria.page ?? 1, 1);
-    const limit = Math.max(criteria.limit ?? 10, 1);
-    const skip = (page - 1) * limit;
+async search(criteria: SearchCriteria): Promise<PaginatedProducts> {
+  const filter: FilterQuery<ProductDocument> = {};
 
-    if (criteria.query && criteria.query.trim().length > 0) {
-      const escaped = this.escapeRegex(criteria.query.trim());
+  const page = Math.max(Number(criteria.page ?? 1), 1);
+  const limit = Math.max(Number(criteria.limit ?? 10), 1);
+  const skip = (page - 1) * limit;
 
-      filter.$or = [
-        { name: { $regex: escaped, $options: 'i' } },
-        { description: { $regex: escaped, $options: 'i' } },
-        { brand: { $regex: escaped, $options: 'i' } },
-        { tags: { $in: [new RegExp(escaped, 'i')] } },
-      ] as any;
+  // پشتیبانی از هر دو پارامتر query و q
+  const rawQuery =
+    typeof criteria.query === 'string'
+      ? criteria.query
+      : typeof (criteria as any).q === 'string'
+      ? (criteria as any).q
+      : '';
+
+  const trimmedQuery = rawQuery.trim();
+  const hasTextQuery = trimmedQuery.length > 0;
+
+  console.log('=== [DEBUG START] =====================================');
+  console.log('1. INCOMING SEARCH CRITERIA:', JSON.stringify(criteria, null, 2));
+  console.log('2. NORMALIZED QUERY:', JSON.stringify(trimmedQuery));
+
+  // 1) Text search
+  if (hasTextQuery) {
+    filter.$text = { $search: trimmedQuery };
+  }
+
+  // 2) Price filters
+  if (criteria.minPrice !== undefined || criteria.maxPrice !== undefined) {
+    filter.price = {};
+
+    if (criteria.minPrice !== undefined) {
+      (filter.price as any).$gte = Number(criteria.minPrice);
     }
 
-    if (criteria.minPrice !== undefined || criteria.maxPrice !== undefined) {
-      filter.price = {};
-      if (criteria.minPrice !== undefined) {
-        (filter.price as any).$gte = criteria.minPrice;
-      }
-      if (criteria.maxPrice !== undefined) {
-        (filter.price as any).$lte = criteria.maxPrice;
-      }
+    if (criteria.maxPrice !== undefined) {
+      (filter.price as any).$lte = Number(criteria.maxPrice);
     }
+  }
 
-    if (criteria.minRating !== undefined) {
-      filter.rating = { $gte: criteria.minRating } as any;
+  // 3) Minimum rating
+  if (criteria.minRating !== undefined) {
+    filter.rating = { $gte: Number(criteria.minRating) } as any;
+  }
+
+  // 4) Categories filter
+  if (Array.isArray(criteria.categories) && criteria.categories.length > 0) {
+    const categoryIds = criteria.categories
+      .map(id => String(id).trim())
+      .filter(id => Types.ObjectId.isValid(id))
+      .map(id => new Types.ObjectId(id));
+
+    if (categoryIds.length > 0) {
+      filter.categoryId = { $in: categoryIds } as any;
+    } else {
+      filter.categoryId = { $in: [] } as any;
     }
+  }
 
-    if (criteria.categories && criteria.categories.length > 0) {
-      const categoryIds = criteria.categories
-        .filter(id => Types.ObjectId.isValid(id))
-        .map(id => new Types.ObjectId(id));
+  // 5) Sorting
+  let sort: Record<string, 1 | -1 | { $meta: 'textScore' }> = {};
 
-      if (categoryIds.length > 0) {
-        filter.categoryId = { $in: categoryIds } as any;
-      } else {
-        filter.categoryId = { $in: [] } as any;
-      }
-    }
-
-    let sort: Record<string, 1 | -1> = { createdAt: -1 };
-
+  if (hasTextQuery) {
+    sort = {
+      score: { $meta: 'textScore' }
+    };
+  } else {
     switch (criteria.sortBy) {
       case 'price-asc':
         sort = { price: 1 };
         break;
+
       case 'price-desc':
         sort = { price: -1 };
         break;
+
       case 'rating':
         sort = { rating: -1, numberOfReviews: -1 };
         break;
-      case 'popularity':
-        sort = { purchases: -1, views: -1, wishlistAdds: -1 };
-        break;
+
       case 'newest':
       default:
         sort = { createdAt: -1 };
         break;
     }
+  }
 
-    const [docs, total] = await Promise.all([
-      this.model.find(filter).sort(sort).skip(skip).limit(limit).exec(),
-      this.model.countDocuments(filter).exec(),
-    ]);
+  console.log('3. DATABASE FILTER:', JSON.stringify(filter, null, 2));
+  console.log('4. DATABASE SORT:', JSON.stringify(sort, null, 2));
+
+  try {
+    const projection = hasTextQuery
+      ? { score: { $meta: 'textScore' } }
+      : {};
+
+    const docs = await this.model
+      .find(filter, projection)
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    const total = await this.model.countDocuments(filter).exec();
+
+    console.log(`5. RAW DOCS FOUND FROM DB (Length: ${docs.length})`);
+    console.log('6. TOTAL COUNT:', total);
+    console.log('=== [DEBUG END] =======================================');
 
     return {
       items: docs.map(doc => ProductMapper.toDomain(doc)),
@@ -173,7 +222,17 @@ export class ProductRepository implements IProductRepository {
       page,
       limit,
     };
+  } catch (error) {
+    console.error('❌ DATABASE QUERY ERROR:', error);
+    console.log('=== [DEBUG END WITH ERROR] ============================');
+    throw error;
   }
+}
+
+
+
+
+
 
   async incrementField(
     id: string,
