@@ -11,10 +11,11 @@ import { UpdateOrderUseCase } from './application/use-cases/update-order.usecase
 import { UpdateOrderStatusUseCase } from './application/use-cases/update-order-status.usecase';
 import { UpdateOrderPaymentStatusUseCase } from './application/use-cases/update-order-payment-status.usecase';
 import { DeleteOrderUseCase } from './application/use-cases/delete-order.usecase';
+import { MessagingModule } from 'src/shared/messaging/messaging.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: 'Order', schema: OrderSchema }]),
+    MongooseModule.forFeature([{ name: 'Order', schema: OrderSchema }]),MessagingModule
   ],
   controllers: [OrdersController],
   providers: [

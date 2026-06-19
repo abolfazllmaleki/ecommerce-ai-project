@@ -16,6 +16,7 @@ import { RecaptchaModule } from './recaptcha/recaptcha.module';
 import { ContactModule } from './contact/contact.module';
 import { RedisModule } from './shared/infrastructure/redis/redis.module';
 import { UploadModule } from './shared/cloudinary/upload.module';
+import { MessagingModule } from './shared/messaging/messaging.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -41,7 +42,8 @@ import { UploadModule } from './shared/cloudinary/upload.module';
     RecaptchaModule,
     ContactModule,
     RedisModule,
-    UploadModule
+    UploadModule,
+    MessagingModule
   ],
   controllers: [AppController],
   providers: [AppService],
