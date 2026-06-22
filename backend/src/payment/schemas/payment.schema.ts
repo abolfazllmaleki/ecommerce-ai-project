@@ -1,25 +1,59 @@
 import { Schema, Document } from 'mongoose';
 
-export const PaymentSchema = new Schema({
-  orderId: { type: String, required: true, index: true },
-  userId: { type: String, required: true },
+export const PaymentSchema = new Schema(
+  {
+    orderId: { type: String, required: true, index: true },
+    userId: { type: String, required: true, index: true },
 
-  amount: { type: Number, required: true },
+    amount: { type: Number, required: true },
 
-  gateway: { type: String, required: true },
+    gateway: { type: String, required: true, index: true },
 
-  authority: { type: String, unique: true, sparse: true },
+    authority: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
 
-  transactionId: { type: String },
+    paymentUrl: { type: String },
 
-  status: {
-    type: String,
-    enum: ['pending', 'initiated', 'completed', 'failed', 'refunded'],
-    default: 'pending'
+    transactionId: {
+      type: String,
+      index: true,
+      sparse: true,
+    },
+
+    status: {
+      type: String,
+      enum: [
+        'pending',
+        'initiated',
+        'verifying',
+        'completed',
+        'failed',
+        'expired',
+        'refunded',
+      ],
+      default: 'pending',
+      index: true,
+    },
+
+    failureReason: { type: String },
+    gatewayRawResponse: { type: Schema.Types.Mixed },
+
+    createdAt: { type: Date, default: Date.now },
+    initiatedAt: { type: Date },
+    paidAt: { type: Date },
+    failedAt: { type: Date },
+    expiresAt: { type: Date },
   },
+  {
+    versionKey: false,
+  },
+);
 
-  createdAt: { type: Date, default: Date.now },
-  paidAt: { type: Date }
-});
+PaymentSchema.index({ orderId: 1, status: 1 });
+PaymentSchema.index({ userId: 1, createdAt: -1 });
 
 export interface Payment extends Document {}

@@ -1,47 +1,51 @@
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Transaction } from '../domain/transaction.entity';
+
 import { ITransactionRepository } from '../domain/transaction.repository.port';
+import { Transaction as TransactionEntity } from '../domain/transaction.entity';
+import { Transaction } from '../schemas/transaction.schema';
+import { TransactionMapper } from './transaction.mapper';
 
-
+@Injectable()
 export class TransactionRepository implements ITransactionRepository {
-
   constructor(
     @InjectModel('Transaction')
-    private readonly model: Model<any>
+    private readonly model: Model<Transaction>,
   ) {}
 
-  async create(transaction: Transaction): Promise<Transaction> {
+  async create(transaction: TransactionEntity): Promise<TransactionEntity> {
+    const created = new this.model(TransactionMapper.toPersistence(transaction));
+    const saved = await created.save();
 
-    const created = await this.model.create(transaction.toObject());
-
-    return new Transaction({ ...created.toObject(), id: created._id });
+    return TransactionMapper.toDomain(saved);
   }
 
-  async update(transaction: Transaction): Promise<Transaction> {
-
+  async update(transaction: TransactionEntity): Promise<TransactionEntity> {
     const updated = await this.model.findByIdAndUpdate(
       transaction.id,
-      transaction.toObject(),
-      { new: true }
+      TransactionMapper.toPersistence(transaction),
+      { new: true },
     );
 
-    return new Transaction({ ...updated.toObject(), id: updated._id });
+    if (!updated) {
+      throw new Error('Transaction update failed');
+    }
+
+    return TransactionMapper.toDomain(updated);
   }
 
-  async findById(id: string): Promise<Transaction | null> {
+  async findById(id: string): Promise<TransactionEntity | null> {
+    const transaction = await this.model.findById(id);
 
-    const doc = await this.model.findById(id);
-
-    if (!doc) return null;
-
-    return new Transaction({ ...doc.toObject(), id: doc._id });
+    return transaction ? TransactionMapper.toDomain(transaction) : null;
   }
 
-  async findByPaymentId(paymentId: string): Promise<Transaction[]> {
+  async findByPaymentId(paymentId: string): Promise<TransactionEntity[]> {
+    const transactions = await this.model
+      .find({ paymentId })
+      .sort({ createdAt: -1 });
 
-    const docs = await this.model.find({ paymentId });
-
-    return docs.map(d => new Transaction({ ...d.toObject(), id: d._id }));
+    return transactions.map(TransactionMapper.toDomain);
   }
 }

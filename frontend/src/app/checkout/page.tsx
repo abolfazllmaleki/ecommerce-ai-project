@@ -47,76 +47,235 @@ const CheckoutPage = () => {
     }, 5000);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setIsSubmitting(true);
+  //   setError(null);
     
+  //   try {
+  //     // Prepare products array in the format expected by the backend
+  //     const products = cart.map(item => ({
+  //       productId: item.product.id,
+  //       quantity: item.quantity,
+  //       price: item.product.price,
+  //       name: item.product.name
+  //     }));
+
+  //     // Prepare order data matching the CreateOrderDto interface
+  //     const orderData = {
+  //       userId: user?.id,
+  //       products:products,
+  //       totalPrice: orderTotal,
+  //       shippingAddress: {
+  //         firstName: formData.firstName,
+  //         lastName: formData.lastName,
+  //         companyName: formData.companyName,
+  //         streetAddress: formData.streetAddress,
+  //         apartment: formData.apartment,
+  //         city: formData.city,
+  //         state: formData.state,
+  //         postalCode: formData.postalCode,
+  //         country: formData.country
+  //       },
+  //       contactInfo: {
+  //         phone: formData.phone,
+  //         email: formData.email
+  //       },
+  //       paymentMethod: formData.paymentMethod
+  //     };
+
+  //     const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/orders`, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${localStorage.getItem('token')}`,
+  //       },
+  //       body: JSON.stringify(orderData),
+  //     });
+
+  //     // Check if response is JSON before parsing
+  //     const contentType = response.headers.get('content-type');
+  //     if (!contentType || !contentType.includes('application/json')) {
+  //       const text = await response.text();
+  //       console.error('Non-JSON response:', text.substring(0, 200));
+  //       throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+  //     }
+
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       throw new Error(errorData.message || `Failed to place order (${response.status})`);
+  //     }
+      
+  //     const result = await response.json();
+      
+  //     showSuccessAndRedirect('Payment successful! Your order has been placed.');
+  //     clearCart();
+  //   } catch (error: any) {
+  //     console.error('Error placing order:', error);
+  //     showError(error.message || 'Failed to place order. Please try again.');
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  alert('NEW CHECKOUT SUBMIT');
+
+  console.log('1) submit started');
+  console.log('NEXT_PUBLIC_BACKEND_URL:', process.env.NEXT_PUBLIC_BACKEND_URL);
+  console.log('user:', user);
+  console.log('cart:', cart);
+
+  if (!user) {
+    console.log('STOP: no user');
+    showError('Please login before checkout.');
+    return;
+  }
+
+  const userId = user.id || user._id;
+
+  if (!userId) {
+    console.log('STOP: no userId');
+    showError('User id not found. Please login again.');
+    return;
+  }
+
+  if (cart.length === 0) {
+    console.log('STOP: empty cart');
+    showError('Your cart is empty.');
+    return;
+  }
+
+  setIsSubmitting(true);
+  setError(null);
+
+  try {
+    const token = localStorage.getItem('token');
+    console.log('2) token exists:', !!token);
+
+    const products = cart.map((item) => ({
+      productId: item.product.id || item.product._id,
+      quantity: item.quantity,
+      price: item.product.price,
+      name: item.product.name,
+    }));
+
+    const orderData = {
+      userId,
+      products,
+      totalPrice: orderTotal,
+      shippingAddress: {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        companyName: formData.companyName,
+        streetAddress: formData.streetAddress,
+        apartment: formData.apartment,
+        city: formData.city,
+        state: formData.state,
+        postalCode: formData.postalCode,
+        country: formData.country,
+      },
+      contactInfo: {
+        phone: formData.phone,
+        email: formData.email,
+      },
+      paymentMethod: formData.paymentMethod,
+    };
+
+    console.log('3) orderData:', orderData);
+
+    const orderUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/orders`;
+    console.log('4) calling order URL:', orderUrl);
+
+    const orderResponse = await fetch(orderUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(orderData),
+    });
+
+    console.log('5) order status:', orderResponse.status);
+
+    const orderText = await orderResponse.text();
+    console.log('6) order raw response:', orderText);
+
+    let orderResult: any = {};
     try {
-      // Prepare products array in the format expected by the backend
-      const products = cart.map(item => ({
-        productId: item.product.id,
-        quantity: item.quantity,
-        price: item.product.price,
-        name: item.product.name
-      }));
-
-      // Prepare order data matching the CreateOrderDto interface
-      const orderData = {
-        userId: user?.id,
-        products:products,
-        totalPrice: orderTotal,
-        shippingAddress: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          companyName: formData.companyName,
-          streetAddress: formData.streetAddress,
-          apartment: formData.apartment,
-          city: formData.city,
-          state: formData.state,
-          postalCode: formData.postalCode,
-          country: formData.country
-        },
-        contactInfo: {
-          phone: formData.phone,
-          email: formData.email
-        },
-        paymentMethod: formData.paymentMethod
-      };
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/orders`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify(orderData),
-      });
-
-      // Check if response is JSON before parsing
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        console.error('Non-JSON response:', text.substring(0, 200));
-        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Failed to place order (${response.status})`);
-      }
-      
-      const result = await response.json();
-      
-      showSuccessAndRedirect('Payment successful! Your order has been placed.');
-      clearCart();
-    } catch (error: any) {
-      console.error('Error placing order:', error);
-      showError(error.message || 'Failed to place order. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+      orderResult = orderText ? JSON.parse(orderText) : {};
+    } catch {
+      throw new Error('Order response is not JSON.');
     }
-  };
+
+    console.log('7) order parsed response:', orderResult);
+
+    if (!orderResponse.ok) {
+      throw new Error(orderResult.message || 'Failed to create order.');
+    }
+
+    const orderId =
+      orderResult.id ||
+      orderResult._id ||
+      orderResult.orderId ||
+      orderResult.data?.id ||
+      orderResult.data?._id;
+
+    console.log('8) orderId:', orderId);
+
+    if (!orderId) {
+      throw new Error('Order created but order id was not returned.');
+    }
+
+    const paymentUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/payments/${orderId}/start`;
+    console.log('9) calling payment URL:', paymentUrl);
+
+    const paymentResponse = await fetch(paymentUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    console.log('10) payment status:', paymentResponse.status);
+
+    const paymentText = await paymentResponse.text();
+    console.log('11) payment raw response:', paymentText);
+
+    let paymentResult: any = {};
+    try {
+      paymentResult = paymentText ? JSON.parse(paymentText) : {};
+    } catch {
+      throw new Error('Payment response is not JSON.');
+    }
+
+    console.log('12) payment parsed response:', paymentResult);
+
+    if (!paymentResponse.ok) {
+      throw new Error(paymentResult.message || 'Failed to start payment.');
+    }
+
+    const redirectUrl =
+      paymentResult.paymentUrl ||
+      paymentResult.data?.paymentUrl ||
+      paymentResult.url;
+
+    console.log('13) redirectUrl:', redirectUrl);
+
+    if (!redirectUrl) {
+      throw new Error('Payment URL was not returned.');
+    }
+
+    window.location.assign(redirectUrl);
+  } catch (error: any) {
+    console.error('Checkout error:', error);
+    showError(error.message || 'Checkout failed. Please try again.');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

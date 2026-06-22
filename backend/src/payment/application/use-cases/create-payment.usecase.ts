@@ -53,22 +53,26 @@ export class StartPaymentUseCase {
       type: TransactionType.REQUEST
     });
 
-    const callbackUrl =
-      `${process.env.API_URL}/payments/verify?orderId=${order.id}`;
+const callbackUrl =
+  `${process.env.API_URL}/payments/verify?orderId=${order.id}`;
 
-    const gatewayResult = await this.gateway.createPayment(
-      createdPayment.amount,
-      callbackUrl,
-      `Order ${createdPayment.orderId}`
-    );
+const gatewayResult = await this.gateway.createPayment(
+  createdPayment.amount,
+  callbackUrl,
+  `Order ${createdPayment.orderId}`
+);
 
-    createdPayment.markInitiated(gatewayResult.authority);
+createdPayment.markInitiated(
+  gatewayResult.authority,
+  gatewayResult.paymentUrl
+);
 
-    await this.repo.update(createdPayment);
+await this.repo.update(createdPayment);
 
-    return {
-      paymentUrl: gatewayResult.paymentUrl,
-      authority: gatewayResult.authority
-    };
+return {
+  paymentUrl: gatewayResult.paymentUrl,
+  authority: gatewayResult.authority
+};
+
   }
 }

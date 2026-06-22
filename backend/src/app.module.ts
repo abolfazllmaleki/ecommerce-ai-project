@@ -17,6 +17,8 @@ import { ContactModule } from './contact/contact.module';
 import { RedisModule } from './shared/infrastructure/redis/redis.module';
 import { UploadModule } from './shared/cloudinary/upload.module';
 import { MessagingModule } from './shared/messaging/messaging.module';
+import { PaymentModule } from './payment/payment.module';
+import { TransactionModule } from './transaction/transaction.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -43,7 +45,9 @@ import { MessagingModule } from './shared/messaging/messaging.module';
     ContactModule,
     RedisModule,
     UploadModule,
-    MessagingModule
+    MessagingModule,
+    TransactionModule,
+    PaymentModule
   ],
   controllers: [AppController],
   providers: [AppService],

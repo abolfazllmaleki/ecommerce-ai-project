@@ -1,22 +1,23 @@
-import { Inject, Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 import { IPaymentRepository } from '../../domain/payment.repository.port';
 import { CreateTransactionUseCase } from '../../../transaction/application/use-cases/create-transaction.usecase';
-import { TransactionType } from 'src/transaction/domain/transaction.entity';
+import {
+  TransactionStatus,
+  TransactionType,
+} from '../../../transaction/domain/transaction.entity';
 
 @Injectable()
 export class FailPaymentUseCase {
-
   constructor(
     @Inject('IPaymentRepository')
-    private readonly repo: IPaymentRepository,
+    private readonly paymentRepo: IPaymentRepository,
 
-    private readonly createTransaction: CreateTransactionUseCase
+    private readonly createTransaction: CreateTransactionUseCase,
   ) {}
 
-  async execute(paymentId: string) {
-
-    const payment = await this.repo.findById(paymentId);
+  async execute(paymentId: string, reason = 'manual_fail') {
+    const payment = await this.paymentRepo.findById(paymentId);
 
     if (!payment) {
       throw new BadRequestException('Payment not found');
@@ -26,19 +27,23 @@ export class FailPaymentUseCase {
       throw new BadRequestException('Payment already completed');
     }
 
-    payment.markFailed();
+    payment.markFailed(reason);
 
-    await this.repo.update(payment);
+    await this.paymentRepo.update(payment);
 
     await this.createTransaction.execute({
       paymentId: payment.id!,
       orderId: payment.orderId,
       amount: payment.amount,
-      type: TransactionType.CHARGEBACK
+      type: TransactionType.VERIFY,
+      status: TransactionStatus.FAILED,
+      gatewayResponse: { reason },
     });
 
     return {
-      success: false
+      success: false,
+      paymentId: payment.id,
+      reason,
     };
   }
 }

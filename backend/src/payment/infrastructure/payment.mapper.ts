@@ -9,10 +9,16 @@ export class PaymentMapper {
       amount: data.amount,
       gateway: data.gateway,
       authority: data.authority,
+      paymentUrl: data.paymentUrl,
       transactionId: data.transactionId,
       status: data.status,
+      failureReason: data.failureReason,
+      gatewayRawResponse: data.gatewayRawResponse,
       createdAt: data.createdAt,
+      initiatedAt: data.initiatedAt,
       paidAt: data.paidAt,
+      failedAt: data.failedAt,
+      expiresAt: data.expiresAt,
     });
   }
 
@@ -23,10 +29,16 @@ export class PaymentMapper {
       amount: entity.amount,
       gateway: entity.gateway,
       authority: entity.authority,
+      paymentUrl: entity.paymentUrl,
       transactionId: entity.transactionId,
       status: entity.status,
+      failureReason: entity.failureReason,
+      gatewayRawResponse: entity.gatewayRawResponse,
       createdAt: entity.createdAt,
+      initiatedAt: entity.initiatedAt,
       paidAt: entity.paidAt,
+      failedAt: entity.failedAt,
+      expiresAt: entity.expiresAt,
     };
   }
 }

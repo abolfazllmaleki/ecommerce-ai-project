@@ -1,36 +1,35 @@
-import { Schema } from 'mongoose';
+import { Schema, Document } from 'mongoose';
 
-export const TransactionSchema = new Schema({
+export const TransactionSchema = new Schema(
+  {
+    paymentId: { type: String, required: true, index: true },
+    orderId: { type: String, required: true, index: true },
 
-  paymentId: {
-    type: String,
-    required: true,
-    index: true
+    type: {
+      type: String,
+      enum: ['request', 'verify', 'refund', 'chargeback'],
+      required: true,
+      index: true,
+    },
+
+    amount: { type: Number, required: true },
+
+    status: {
+      type: String,
+      enum: ['pending', 'success', 'failed'],
+      default: 'pending',
+      index: true,
+    },
+
+    gatewayResponse: { type: Schema.Types.Mixed },
+
+    createdAt: { type: Date, default: Date.now, index: true },
   },
-
-  orderId: {
-    type: String,
-    required: true,
-    index: true
+  {
+    versionKey: false,
   },
+);
 
-  type: {
-    type: String,
-    enum: ['request','verify','refund','chargeback']
-  },
+TransactionSchema.index({ paymentId: 1, type: 1, createdAt: -1 });
 
-  amount: Number,
-
-  status: {
-    type: String,
-    enum: ['pending','success','failed']
-  },
-
-  gatewayResponse: Schema.Types.Mixed,
-
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
-
-});
+export interface Transaction extends Document {}

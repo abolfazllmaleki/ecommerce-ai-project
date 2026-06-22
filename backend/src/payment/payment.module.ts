@@ -6,40 +6,36 @@ import { PaymentRepository } from './infrastructure/payment.repository';
 
 import { StartPaymentUseCase } from './application/use-cases/start-payment.usecase';
 import { VerifyPaymentUseCase } from './application/use-cases/verify-payment.usecase';
+import { FailPaymentUseCase } from './application/use-cases/fail-payment.usecase';
 
 import { PaymentController } from './interface/payment.controller';
 import { PaymentWebhookController } from './interface/webhooks.controller';
 
 import { ZarinpalGateway } from './infrastructure/gateways/zarinpal.gateway';
 import { OrdersModule } from '../orders/orders.module';
+import { TransactionModule } from '../transaction/transaction.module';
+import { MockGateway } from './infrastructure/gateways/mock-gateway.service';
+import { MockGatewayController } from './interface/mock-gateway.controller';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: 'Payment', schema: PaymentSchema }
-    ]),
-    OrdersModule
+    MongooseModule.forFeature([{ name: 'Payment', schema: PaymentSchema }]),
+    OrdersModule,
+    TransactionModule,
   ],
-
-  controllers: [
-    PaymentController,
-    PaymentWebhookController
-  ],
-
+  controllers: [PaymentController, PaymentWebhookController,  MockGatewayController],
   providers: [
     {
       provide: 'IPaymentRepository',
-      useClass: PaymentRepository
+      useClass: PaymentRepository,
     },
-
-    // ✅ gateway abstraction
     {
       provide: 'PAYMENT_GATEWAY',
-      useClass: ZarinpalGateway
+      useClass: MockGateway,
     },
-
     StartPaymentUseCase,
-    VerifyPaymentUseCase
-  ]
+    VerifyPaymentUseCase,
+    FailPaymentUseCase,
+  ],
 })
 export class PaymentModule {}

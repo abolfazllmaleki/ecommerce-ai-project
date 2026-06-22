@@ -1,20 +1,23 @@
-import { Controller, Post, Body, Headers } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
+
 import { VerifyPaymentUseCase } from '../application/use-cases/verify-payment.usecase';
 
 @Controller('payments/webhook')
 export class PaymentWebhookController {
-
-  constructor(
-    private readonly verifyPayment: VerifyPaymentUseCase
-  ) {}
+  constructor(private readonly verifyPayment: VerifyPaymentUseCase) {}
 
   @Post('zarinpal')
-  async handleZarinpalWebhook(
-    @Body() body: any,
-  ) {
+  async handleZarinpalWebhook(@Body() body: any) {
+    const authority = body.Authority ?? body.authority;
+    const status = body.Status ?? body.status;
 
-    const authority = body.Authority;
+    if (!authority) {
+      throw new BadRequestException('Authority is required');
+    }
 
-    return this.verifyPayment.execute(authority);
+    return this.verifyPayment.execute({
+      authority,
+      callbackStatus: status,
+    });
   }
 }

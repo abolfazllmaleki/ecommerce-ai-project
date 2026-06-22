@@ -1,12 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ITransactionRepository } from 'src/transaction/domain/transaction.repository.port';
+
+import { ITransactionRepository } from '../../domain/transaction.repository.port';
 
 @Injectable()
 export class GetTransactionsByPaymentUseCase {
-
   constructor(
     @Inject('ITransactionRepository')
-    private readonly transactionRepo: ITransactionRepository
+    private readonly transactionRepo: ITransactionRepository,
   ) {}
 
   async execute(paymentId: string) {

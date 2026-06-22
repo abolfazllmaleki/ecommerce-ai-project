@@ -23,6 +23,7 @@ export class LoginUseCase {
       throw new UnauthorizedException("Invalid credentials");
     }
 
+
     const valid = await this.hasher.compare(password, user.password);
 
     if (!valid) {

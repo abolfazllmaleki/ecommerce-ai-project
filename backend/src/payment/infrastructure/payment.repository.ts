@@ -15,20 +15,22 @@ export class PaymentRepository implements IPaymentRepository {
   ) {}
 
   async create(payment: PaymentEntity): Promise<PaymentEntity> {
-    const data = PaymentMapper.toPersistence(payment);
-    const created = new this.model(data);
+    const created = new this.model(PaymentMapper.toPersistence(payment));
     const saved = await created.save();
+
     return PaymentMapper.toDomain(saved);
   }
 
   async update(payment: PaymentEntity): Promise<PaymentEntity> {
-    const data = PaymentMapper.toPersistence(payment);
-
     const updated = await this.model.findByIdAndUpdate(
       payment.id,
-      data,
-      { new: true }
+      PaymentMapper.toPersistence(payment),
+      { new: true },
     );
+
+    if (!updated) {
+      throw new Error('Payment update failed');
+    }
 
     return PaymentMapper.toDomain(updated);
   }
@@ -36,16 +38,47 @@ export class PaymentRepository implements IPaymentRepository {
   async findById(id: string): Promise<PaymentEntity | null> {
     const payment = await this.model.findById(id);
 
-    if (!payment) return null;
-
-    return PaymentMapper.toDomain(payment);
+    return payment ? PaymentMapper.toDomain(payment) : null;
   }
 
   async findByAuthority(authority: string): Promise<PaymentEntity | null> {
     const payment = await this.model.findOne({ authority });
 
-    if (!payment) return null;
+    return payment ? PaymentMapper.toDomain(payment) : null;
+  }
 
-    return PaymentMapper.toDomain(payment);
+  async findActiveByOrderId(orderId: string): Promise<PaymentEntity | null> {
+    const payment = await this.model
+      .findOne({
+        orderId,
+        status: { $in: ['pending', 'initiated', 'verifying'] },
+      })
+      .sort({ createdAt: -1 });
+
+    return payment ? PaymentMapper.toDomain(payment) : null;
+  }
+
+  async acquireForVerification(authority: string): Promise<PaymentEntity | null> {
+    const payment = await this.model.findOneAndUpdate(
+      {
+        authority,
+        status: 'initiated',
+        $or: [
+          { expiresAt: { $exists: false } },
+          { expiresAt: null },
+          { expiresAt: { $gt: new Date() } },
+        ],
+      },
+      {
+        $set: {
+          status: 'verifying',
+        },
+      },
+      {
+        new: true,
+      },
+    );
+
+    return payment ? PaymentMapper.toDomain(payment) : null;
   }
 }

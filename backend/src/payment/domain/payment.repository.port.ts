@@ -5,4 +5,6 @@ export interface IPaymentRepository {
   update(payment: Payment): Promise<Payment>;
   findById(id: string): Promise<Payment | null>;
   findByAuthority(authority: string): Promise<Payment | null>;
+  findActiveByOrderId(orderId: string): Promise<Payment | null>;
+  acquireForVerification(authority: string): Promise<Payment | null>;
 }
