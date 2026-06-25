@@ -21,6 +21,7 @@ export class MockGatewayController {
     let failUrl: URL;
 
     try {
+      console.log('MxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxM')
       successUrl = new URL(callback);
       successUrl.searchParams.set('Authority', authority);
       successUrl.searchParams.set('Status', 'OK');

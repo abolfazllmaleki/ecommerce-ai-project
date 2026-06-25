@@ -4,16 +4,23 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 
 import { IPaymentRepository } from '../../domain/payment.repository.port';
 import { PaymentGatewayPort } from '../../domain/payment-gateway.port';
 import { IOrderRepository } from '../../../orders/domain/order.repository.port';
-
 import { CreateTransactionUseCase } from '../../../transaction/application/use-cases/create-transaction.usecase';
 import {
   TransactionStatus,
   TransactionType,
 } from '../../../transaction/domain/transaction.entity';
+import {
+  EVENT_PUBLISHER,
+  EventPublisher,
+} from '../../../shared/messaging/application/ports/event-publisher.port';
+
+import { PaymentFailedPayload } from '../events/payment-failed.event';
+import { PaymentSucceededPayload } from '../events/payment-succeeded.event';
 
 interface VerifyPaymentInput {
   authority: string;
@@ -33,10 +40,15 @@ export class VerifyPaymentUseCase {
     private readonly orderRepo: IOrderRepository,
 
     private readonly createTransaction: CreateTransactionUseCase,
+
+    @Inject(EVENT_PUBLISHER)
+    private readonly eventPublisher: EventPublisher,
   ) {}
 
   async execute(input: VerifyPaymentInput) {
-    const existingPayment = await this.paymentRepo.findByAuthority(input.authority);
+    const existingPayment = await this.paymentRepo.findByAuthority(
+      input.authority,
+    );
 
     if (!existingPayment) {
       throw new BadRequestException('Payment not found');
@@ -58,13 +70,15 @@ export class VerifyPaymentUseCase {
 
     if (existingPayment.isExpired()) {
       existingPayment.markExpired();
-      await this.paymentRepo.update(existingPayment);
+      const updatedPayment = await this.paymentRepo.update(existingPayment);
+
+      await this.publishPaymentFailed(updatedPayment, 'payment_expired');
 
       return {
         success: false,
         reason: 'payment_expired',
-        paymentId: existingPayment.id,
-        orderId: existingPayment.orderId,
+        paymentId: updatedPayment.id,
+        orderId: updatedPayment.orderId,
       };
     }
 
@@ -73,12 +87,12 @@ export class VerifyPaymentUseCase {
         callbackStatus: input.callbackStatus,
       });
 
-      await this.paymentRepo.update(existingPayment);
+      const updatedPayment = await this.paymentRepo.update(existingPayment);
 
       await this.createTransaction.execute({
-        paymentId: existingPayment.id!,
-        orderId: existingPayment.orderId,
-        amount: existingPayment.amount,
+        paymentId: updatedPayment.id!,
+        orderId: updatedPayment.orderId,
+        amount: updatedPayment.amount,
         type: TransactionType.VERIFY,
         status: TransactionStatus.FAILED,
         gatewayResponse: {
@@ -86,18 +100,27 @@ export class VerifyPaymentUseCase {
         },
       });
 
+      await this.publishPaymentFailed(
+        updatedPayment,
+        'payment_cancelled_or_failed',
+      );
+
       return {
         success: false,
         reason: 'payment_cancelled_or_failed',
-        paymentId: existingPayment.id,
-        orderId: existingPayment.orderId,
+        paymentId: updatedPayment.id,
+        orderId: updatedPayment.orderId,
       };
     }
 
-    const payment = await this.paymentRepo.acquireForVerification(input.authority);
+    const payment = await this.paymentRepo.acquireForVerification(
+      input.authority,
+    );
 
     if (!payment) {
-      const refreshedPayment = await this.paymentRepo.findByAuthority(input.authority);
+      const refreshedPayment = await this.paymentRepo.findByAuthority(
+        input.authority,
+      );
 
       if (refreshedPayment?.isCompleted()) {
         return {
@@ -142,29 +165,31 @@ export class VerifyPaymentUseCase {
         result.rawResponse,
       );
 
-      await this.paymentRepo.update(payment);
+      const updatedPayment = await this.paymentRepo.update(payment);
 
       await this.createTransaction.execute({
-        paymentId: payment.id!,
-        orderId: payment.orderId,
-        amount: payment.amount,
+        paymentId: updatedPayment.id!,
+        orderId: updatedPayment.orderId,
+        amount: updatedPayment.amount,
         type: TransactionType.VERIFY,
         status: TransactionStatus.FAILED,
         gatewayResponse: result.rawResponse,
       });
 
+      await this.publishPaymentFailed(
+        updatedPayment,
+        result.message ?? 'verify_failed',
+      );
+
       return {
         success: false,
         reason: result.message ?? 'verify_failed',
-        paymentId: payment.id,
-        orderId: payment.orderId,
+        paymentId: updatedPayment.id,
+        orderId: updatedPayment.orderId,
       };
     }
 
-    payment.markCompleted(
-      result.transactionId!,
-      result.rawResponse,
-    );
+    payment.markCompleted(result.transactionId!, result.rawResponse);
 
     const updatedPayment = await this.paymentRepo.update(payment);
 
@@ -184,6 +209,8 @@ export class VerifyPaymentUseCase {
       await this.orderRepo.update(order);
     }
 
+    await this.publishPaymentSucceeded(updatedPayment);
+
     return {
       success: true,
       alreadyVerified: false,
@@ -192,6 +219,73 @@ export class VerifyPaymentUseCase {
       transactionId: updatedPayment.transactionId,
     };
   }
+
+private async publishPaymentSucceeded(payment: {
+  id: string | null;
+  orderId: string;
+  userId: string;
+  amount: number;
+  transactionId?: string | null;
+}): Promise<void> {
+  if (!payment.id) {
+    throw new Error('Cannot publish payment.succeeded event without paymentId');
+  }
+
+  if (!payment.transactionId) {
+    throw new Error(
+      'Cannot publish payment.succeeded event without transactionId',
+    );
+  }
+
+  const payload: PaymentSucceededPayload = {
+    paymentId: payment.id,
+    orderId: payment.orderId,
+    userId: payment.userId,
+    amount: payment.amount,
+    transactionId: payment.transactionId,
+  };
+
+  await this.eventPublisher.publish<PaymentSucceededPayload>({
+    eventId: randomUUID(),
+    name: 'payment.succeeded',
+    version: 1,
+    occurredAt: new Date().toISOString(),
+    payload,
+  });
+}
+
+private async publishPaymentFailed(
+  payment: {
+    id: string | null;
+    orderId: string;
+    userId: string;
+    amount: number;
+  },
+  reason: string,
+): Promise<void> {
+  if (!payment.id) {
+    throw new Error('Cannot publish payment.failed event without paymentId');
+  }
+
+  const payload: PaymentFailedPayload = {
+    paymentId: payment.id,
+    orderId: payment.orderId,
+    userId: payment.userId,
+    amount: payment.amount,
+    reason,
+  };
+
+  await this.eventPublisher.publish<PaymentFailedPayload>({
+    eventId: randomUUID(),
+    name: 'payment.failed',
+    version: 1,
+    occurredAt: new Date().toISOString(),
+    payload,
+  });
+}
+
+
+
 
   private isOrderPaid(paymentStatus: string): boolean {
     return ['paid', 'completed'].includes(paymentStatus);

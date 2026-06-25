@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Inject,
   Injectable,
@@ -60,14 +61,18 @@ export class StartPaymentUseCase {
       await this.paymentRepo.update(activePayment);
     }
 
-    if (activePayment && !activePayment.isExpired() && activePayment.paymentUrl) {
-      return {
-        paymentId: activePayment.id,
-        orderId: activePayment.orderId,
-        authority: activePayment.authority,
-        paymentUrl: activePayment.paymentUrl,
-        reused: true,
-      };
+    if (activePayment && !activePayment.isExpired()) {
+      if (activePayment.paymentUrl) {
+        return {
+          paymentId: activePayment.id,
+          orderId: activePayment.orderId,
+          authority: activePayment.authority,
+          paymentUrl: activePayment.paymentUrl,
+          reused: true,
+        };
+      }
+
+      throw new ConflictException('Payment is already being started');
     }
 
     const payment = new Payment({
@@ -77,7 +82,31 @@ export class StartPaymentUseCase {
       gateway: 'zarinpal',
     });
 
-    const createdPayment = await this.paymentRepo.create(payment);
+    let createdPayment: Payment;
+
+    try {
+      createdPayment = await this.paymentRepo.create(payment);
+    } catch (error) {
+      if (error?.code === 11000) {
+        const existingPayment = await this.paymentRepo.findActiveByOrderId(
+          order.id!,
+        );
+
+        if (existingPayment?.paymentUrl) {
+          return {
+            paymentId: existingPayment.id,
+            orderId: existingPayment.orderId,
+            authority: existingPayment.authority,
+            paymentUrl: existingPayment.paymentUrl,
+            reused: true,
+          };
+        }
+
+        throw new ConflictException('Payment is already being started');
+      }
+
+      throw error;
+    }
 
     try {
       const callbackUrl = `${process.env.BACKEND_URL}/payments/verify`;

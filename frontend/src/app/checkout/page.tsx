@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useCart } from '@/app/context/CartContext';
 import { useAuth } from '@/app/context/AuthContext';
 import { FiLock, FiCreditCard, FiTruck, FiCheckCircle, FiAlertCircle, FiHome } from 'react-icons/fi';
@@ -13,6 +13,7 @@ const CheckoutPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const submittingRef = useRef(false);
 
   const [formData, setFormData] = useState({
     firstName: user?.name?.split(' ')[0] || '',
@@ -47,109 +48,49 @@ const CheckoutPage = () => {
     }, 5000);
   };
 
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setIsSubmitting(true);
-  //   setError(null);
-    
-  //   try {
-  //     // Prepare products array in the format expected by the backend
-  //     const products = cart.map(item => ({
-  //       productId: item.product.id,
-  //       quantity: item.quantity,
-  //       price: item.product.price,
-  //       name: item.product.name
-  //     }));
+ 
 
-  //     // Prepare order data matching the CreateOrderDto interface
-  //     const orderData = {
-  //       userId: user?.id,
-  //       products:products,
-  //       totalPrice: orderTotal,
-  //       shippingAddress: {
-  //         firstName: formData.firstName,
-  //         lastName: formData.lastName,
-  //         companyName: formData.companyName,
-  //         streetAddress: formData.streetAddress,
-  //         apartment: formData.apartment,
-  //         city: formData.city,
-  //         state: formData.state,
-  //         postalCode: formData.postalCode,
-  //         country: formData.country
-  //       },
-  //       contactInfo: {
-  //         phone: formData.phone,
-  //         email: formData.email
-  //       },
-  //       paymentMethod: formData.paymentMethod
-  //     };
-
-  //     const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/orders`, {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'Authorization': `Bearer ${localStorage.getItem('token')}`,
-  //       },
-  //       body: JSON.stringify(orderData),
-  //     });
-
-  //     // Check if response is JSON before parsing
-  //     const contentType = response.headers.get('content-type');
-  //     if (!contentType || !contentType.includes('application/json')) {
-  //       const text = await response.text();
-  //       console.error('Non-JSON response:', text.substring(0, 200));
-  //       throw new Error(`Server returned ${response.status}: ${response.statusText}`);
-  //     }
-
-  //     if (!response.ok) {
-  //       const errorData = await response.json();
-  //       throw new Error(errorData.message || `Failed to place order (${response.status})`);
-  //     }
-      
-  //     const result = await response.json();
-      
-  //     showSuccessAndRedirect('Payment successful! Your order has been placed.');
-  //     clearCart();
-  //   } catch (error: any) {
-  //     console.error('Error placing order:', error);
-  //     showError(error.message || 'Failed to place order. Please try again.');
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
-  alert('NEW CHECKOUT SUBMIT');
+  e.stopPropagation();
 
-  console.log('1) submit started');
-  console.log('NEXT_PUBLIC_BACKEND_URL:', process.env.NEXT_PUBLIC_BACKEND_URL);
-  console.log('user:', user);
-  console.log('cart:', cart);
-
-  if (!user) {
-    console.log('STOP: no user');
-    showError('Please login before checkout.');
+  if (submittingRef.current) {
+    console.log('STOP: checkout already submitting');
     return;
   }
 
-  const userId = user.id || user._id;
-
-  if (!userId) {
-    console.log('STOP: no userId');
-    showError('User id not found. Please login again.');
-    return;
-  }
-
-  if (cart.length === 0) {
-    console.log('STOP: empty cart');
-    showError('Your cart is empty.');
-    return;
-  }
-
+  submittingRef.current = true;
   setIsSubmitting(true);
   setError(null);
 
+  let shouldUnlockSubmit = true;
+
   try {
+    console.log('1) submit started');
+    console.log('NEXT_PUBLIC_BACKEND_URL:', process.env.NEXT_PUBLIC_BACKEND_URL);
+    console.log('user:', user);
+    console.log('cart:', cart);
+
+    if (!user) {
+      console.log('STOP: no user');
+      showError('Please login before checkout.');
+      return;
+    }
+
+    const userId = user.id || user._id;
+
+    if (!userId) {
+      console.log('STOP: no userId');
+      showError('User id not found. Please login again.');
+      return;
+    }
+
+    if (cart.length === 0) {
+      console.log('STOP: empty cart');
+      showError('Your cart is empty.');
+      return;
+    }
+
     const token = localStorage.getItem('token');
     console.log('2) token exists:', !!token);
 
@@ -267,12 +208,16 @@ const handleSubmit = async (e: React.FormEvent) => {
       throw new Error('Payment URL was not returned.');
     }
 
+    shouldUnlockSubmit = false;
     window.location.assign(redirectUrl);
   } catch (error: any) {
     console.error('Checkout error:', error);
     showError(error.message || 'Checkout failed. Please try again.');
   } finally {
-    setIsSubmitting(false);
+    if (shouldUnlockSubmit) {
+      submittingRef.current = false;
+      setIsSubmitting(false);
+    }
   }
 };
 

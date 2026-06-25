@@ -24,6 +24,18 @@ export class CreateTransactionUseCase {
   ) {}
 
   async execute(input: CreateTransactionInput): Promise<Transaction> {
+    if (input.type === TransactionType.REQUEST) {
+      const existingTransaction =
+        await this.transactionRepo.findByPaymentIdAndType(
+          input.paymentId,
+          input.type,
+        );
+
+      if (existingTransaction) {
+        return existingTransaction;
+      }
+    }
+
     const transaction = new Transaction({
       paymentId: input.paymentId,
       orderId: input.orderId,
@@ -33,6 +45,22 @@ export class CreateTransactionUseCase {
       gatewayResponse: input.gatewayResponse,
     });
 
-    return this.transactionRepo.create(transaction);
+    try {
+      return await this.transactionRepo.create(transaction);
+    } catch (error) {
+      if (error?.code === 11000 && input.type === TransactionType.REQUEST) {
+        const existingTransaction =
+          await this.transactionRepo.findByPaymentIdAndType(
+            input.paymentId,
+            input.type,
+          );
+
+        if (existingTransaction) {
+          return existingTransaction;
+        }
+      }
+
+      throw error;
+    }
   }
 }

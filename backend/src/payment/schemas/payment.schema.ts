@@ -56,4 +56,15 @@ export const PaymentSchema = new Schema(
 PaymentSchema.index({ orderId: 1, status: 1 });
 PaymentSchema.index({ userId: 1, createdAt: -1 });
 
+PaymentSchema.index(
+  { orderId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      status: { $in: ['pending', 'initiated', 'verifying'] },
+    },
+    name: 'unique_active_payment_per_order',
+  },
+);
+
 export interface Payment extends Document {}

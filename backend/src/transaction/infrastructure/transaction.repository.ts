@@ -3,7 +3,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
 import { ITransactionRepository } from '../domain/transaction.repository.port';
-import { Transaction as TransactionEntity } from '../domain/transaction.entity';
+import {
+  Transaction as TransactionEntity,
+  TransactionType,
+} from '../domain/transaction.entity';
 import { Transaction } from '../schemas/transaction.schema';
 import { TransactionMapper } from './transaction.mapper';
 
@@ -47,5 +50,16 @@ export class TransactionRepository implements ITransactionRepository {
       .sort({ createdAt: -1 });
 
     return transactions.map(TransactionMapper.toDomain);
+  }
+
+  async findByPaymentIdAndType(
+    paymentId: string,
+    type: TransactionType,
+  ): Promise<TransactionEntity | null> {
+    const transaction = await this.model
+      .findOne({ paymentId, type })
+      .sort({ createdAt: -1 });
+
+    return transaction ? TransactionMapper.toDomain(transaction) : null;
   }
 }

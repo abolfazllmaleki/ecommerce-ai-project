@@ -32,4 +32,15 @@ export const TransactionSchema = new Schema(
 
 TransactionSchema.index({ paymentId: 1, type: 1, createdAt: -1 });
 
+TransactionSchema.index(
+  { paymentId: 1, type: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      type: 'request',
+    },
+    name: 'unique_request_transaction_per_payment',
+  },
+);
+
 export interface Transaction extends Document {}
