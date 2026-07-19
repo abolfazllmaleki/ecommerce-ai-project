@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IProductRepository } from '../../domain/product.repository.port';
 import { Product } from '../../domain/product.entity';
-import { CachePort,CACHE_PORT} from '../../../shared/application/ports/cache.port';
-import { CacheVersionService } from '../../../shared/infrastructure/redis/cache-version.service';
-import { CacheKeyBuilder } from '../../../shared/infrastructure/redis/cache-key.builder';
-import { CacheNamespaces } from '../../../shared/infrastructure/redis/cache.namespaces';
+import { CachePort,CACHE_PORT} from '../../../shared/caching/application/ports/cache.port';
+import { CacheVersionService } from '../../../shared/caching/infrastructure/redis/cache-version.service';
+import { CacheKeyBuilder } from '../../../shared/caching/infrastructure/redis/cache-key.builder';
+import { CacheNamespaces } from '../../../shared/caching/infrastructure/redis/cache.namespaces';
 
 @Injectable()
 export class GetPopularProductsUseCase {

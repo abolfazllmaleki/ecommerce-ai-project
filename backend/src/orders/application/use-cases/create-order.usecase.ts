@@ -47,7 +47,6 @@ export class CreateOrderUseCase {
         totalPrice: created.totalPrice,
       },
     });
-    console.log('second:')
 
     return created;
   }

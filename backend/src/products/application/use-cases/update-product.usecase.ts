@@ -5,7 +5,7 @@ import { Product } from '../../domain/product.entity';
 import {
   CACHE_INVALIDATOR_PORT,
   CacheInvalidatorPort,
-} from '../../../shared/application/ports/cache-invalidator.port';
+} from '../../../shared/caching/application/ports/cache-invalidator.port';
 
 @Injectable()
 export class UpdateProductUseCase {

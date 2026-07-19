@@ -3,7 +3,7 @@ import { IProductRepository } from '../../domain/product.repository.port';
 import {
   CACHE_INVALIDATOR_PORT,
   CacheInvalidatorPort,
-} from '../../../shared/application/ports/cache-invalidator.port';
+} from '../../../shared/caching/application/ports/cache-invalidator.port';
 @Injectable()
 export class DeleteProductUseCase {
   constructor(
