@@ -21,7 +21,7 @@ export class UpdateProductUseCase {
     const current = await this.repo.findById(id);
 
     if (!current) {
-      throw new NotFoundException('محصول مورد نظر یافت نشد');
+      throw new NotFoundException(`Product Not Found`);
     }
 
     current.updateBasicInfo({
@@ -49,7 +49,6 @@ export class UpdateProductUseCase {
       throw new NotFoundException('محصول مورد نظر یافت نشد');
     }
 
-    // ✅ invalidate cache
     await this.cacheInvalidator.invalidateProduct(id);
     await this.cacheInvalidator.invalidateProductLists();
 

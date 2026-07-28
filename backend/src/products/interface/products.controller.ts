@@ -35,6 +35,10 @@ import { IncrementProductFieldUseCase } from '../application/use-cases/increment
 import { UpdateSimilarProductsUseCase } from '../application/use-cases/update-similar-products.usecase';
 import { AddFeedbackKeywordsUseCase } from '../application/use-cases/add-feedback-keywords.usecase';
 import { GetRelatedProductsUseCase } from '../application/use-cases/get-related-products.usecase';
+import { Roles } from 'src/auth/presentation/decorators/roles.decorator';
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/auth/presentation/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/presentation/guards/roles.guard';
 
 export enum IncrementableProductField {
   Views = 'views',
@@ -61,6 +65,12 @@ export class ProductsController {
     private readonly getRelatedProducts: GetRelatedProductsUseCase,
   ) {}
 
+
+  @UseGuards(
+  JwtAuthGuard,
+  RolesGuard,
+)
+  @Roles('ADMIN')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateProductDto) {
@@ -110,7 +120,6 @@ export class ProductsController {
     return this.updateProduct.execute(id, dto);
   }
 
-  // برای سازگاری با نسخه قدیم
   @Put(':id')
   replace(
     @Param('id') id: string,
