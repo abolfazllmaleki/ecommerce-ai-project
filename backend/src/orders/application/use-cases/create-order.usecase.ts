@@ -35,7 +35,6 @@ export class CreateOrderUseCase {
     
 
     const created = await this.repo.create(order);
-    console.log('first')
     await this.eventPublisher.publish<OrderCreatedPayload>({
       eventId: crypto.randomUUID(),
       name: 'order.created',
