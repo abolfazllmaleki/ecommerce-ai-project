@@ -23,7 +23,7 @@
 
 ## Why This Project?
 
-This is not a todo-app tutorial clone. It is a **real-world e-commerce system** built with patterns you would see on a growing product team: Clean Architecture on the backend, event-driven payment flows, Redis caching, and a polished customer-facing UI with an admin dashboard.
+It is a **real-world e-commerce system** built with patterns you would see on a growing product team: Clean Architecture on the backend, event-driven payment flows, Redis caching, and a polished customer-facing UI with admin and user dashboard.
 
 Built to showcase **full-stack ownership** — from product pages and checkout to async messaging and payment verification.
 
@@ -37,6 +37,7 @@ Built to showcase **full-stack ownership** — from product pages and checkout t
 | **Performance** | Redis cache with versioned keys for hot product queries |
 | **Real payments** | Zarinpal integration + mock gateway for local dev |
 | **Admin dashboard** | Manage products, users, and orders from `/manager` |
+| **User dashboard** | Manage profile, orders, wishlist, and recommended products |
 | **Production-ready extras** | JWT auth, Cloudinary uploads, email reset, reCAPTCHA, i18n support |
 
 ## Tech Stack
@@ -52,6 +53,7 @@ Built to showcase **full-stack ownership** — from product pages and checkout t
 | **Data** | MongoDB (Mongoose), Redis (ioredis) |
 | **Messaging** | RabbitMQ — order & payment events |
 | **Integrations** | Cloudinary, Nodemailer, Zarinpal, Google reCAPTCHA |
+| **Testing** | Jest — unit tests & E2E tests for critical services |
 | **Deploy** | Vercel (frontend + serverless API) |
 
 ## Features
@@ -83,6 +85,7 @@ Built to showcase **full-stack ownership** — from product pages and checkout t
 - Redis caching with namespace versioning
 - Password reset flow over SMTP
 - Health check and test endpoints for monitoring
+- E2E testing infrastructure and unit tests for critical services
 
 ## Project Structure
 
