@@ -8,6 +8,8 @@ export class UserMapper {
   }
 
   static toPersistence(user: User): Record<string, unknown> {
+
+  
     return {
       name: user.name,
       lastname: user.lastname,
@@ -16,8 +18,16 @@ export class UserMapper {
       role: user.role,
       lastLoggedIn: user.lastLoggedIn,
       recommendations: user.recommendations.map(id => new Types.ObjectId(id)),
-      wishList: user.wishList.map(id => new Types.ObjectId(id)),
-      ratings: user.ratings.map(r => ({
+
+        wishList: user.wishList.map(product => {
+          if (!product.id) {
+            throw new Error('Wishlist product must have an id');
+          }
+
+          return new Types.ObjectId(product.id);
+        }),
+    
+    ratings: user.ratings.map(r => ({
         product: new Types.ObjectId(r.productId),
         rating: r.rating,
       })),

@@ -1,3 +1,5 @@
+import { Product } from "../../products/domain/product.entity";
+
 export enum UserRole {
   USER = 'USER',
   ADMIN = 'ADMIN',
@@ -14,7 +16,7 @@ export interface UserProps {
   createdAt?: Date;
   lastLoggedIn?: Date;
   recommendations?: string[];
-  wishList?: string[];
+  wishList?: Product[];
   ratings?: { productId: string; rating: number }[];
   isEmailVerified?: boolean;
   verificationToken?: string;
@@ -39,7 +41,7 @@ export class User {
   public readonly createdAt: Date;
   public lastLoggedIn: Date;
   public recommendations: string[];
-  public wishList: string[];
+public wishList: Product[];
   public ratings: { productId: string; rating: number }[];
   public isEmailVerified: boolean;
   public verificationToken?: string;
@@ -67,7 +69,7 @@ export class User {
     this.createdAt = props.createdAt ?? new Date();
     this.lastLoggedIn = props.lastLoggedIn ?? new Date();
     this.recommendations = props.recommendations ?? [];
-    this.wishList = props.wishList ?? [];
+this.wishList = props.wishList ?? [];
     this.ratings = props.ratings ?? [];
     this.isEmailVerified = props.isEmailVerified ?? false;
     this.verificationToken = props.verificationToken;
@@ -159,47 +161,64 @@ export class User {
     return true;
   }
 
-  addToWishlist(productId: string): void {
-    if (!this.wishList.includes(productId)) {
-      this.wishList.push(productId);
-    }
-  }
+addToWishlist(product: Product): void {
+  const exists = this.wishList.some(
+    item => item.id === product.id
+  );
 
-  removeFromWishlist(productId: string): void {
-    this.wishList = this.wishList.filter(id => id !== productId);
+  if (!exists) {
+    this.wishList.push(product);
   }
+}
+
+removeFromWishlist(productId: string): void {
+  this.wishList = this.wishList.filter(
+    product => product.id !== productId
+  );
+}
+
 
   static fromPersistence(doc: any): User {
-    return new User({
-      id: doc._id?.toString(),
-      name: doc.name,
-      lastname: doc.lastname,
-      email: doc.email,
-      password: doc.password,
-      role: doc.role,
-      createdAt: doc.createdAt,
-      lastLoggedIn: doc.lastLoggedIn,
-      recommendations: doc.recommendations?.map((id: any) => id.toString()) ?? [],
-      wishList: doc.wishList?.map((id: any) => id.toString()) ?? [],
-      ratings:
-        doc.ratings?.map((r: any) => ({
-          productId: r.product.toString(),
-          rating: r.rating,
-        })) ?? [],
-      isEmailVerified: doc.isEmailVerified,
-      verificationToken: doc.verificationToken,
-      resetPasswordToken: doc.resetPasswordToken,
-      resetPasswordExpires: doc.resetPasswordExpires,
-      interactionHistory:
-        doc.interactionHistory?.map((i: any) => ({
-          productId: i.product.toString(),
-          interactionType: i.interactionType,
-          timestamp: i.timestamp,
-        })) ?? [],
-      preferredCategories: doc.preferredCategories ?? [],
-      engagementScore: doc.engagementScore ?? 0,
-    });
-  }
+  return new User({
+    id: doc._id?.toString(),
+    name: doc.name,
+    lastname: doc.lastname,
+    email: doc.email,
+    password: doc.password,
+    role: doc.role,
+    createdAt: doc.createdAt,
+    lastLoggedIn: doc.lastLoggedIn,
+
+    recommendations:
+      doc.recommendations?.map((id: any) => id.toString()) ?? [],
+
+wishList:
+  doc.wishList?.map((product: any) =>
+    Product.fromPersistence(product),
+  ) ?? [],
+
+    ratings:
+      doc.ratings?.map((r: any) => ({
+        productId: r.product.toString(),
+        rating: r.rating,
+      })) ?? [],
+
+    isEmailVerified: doc.isEmailVerified,
+    verificationToken: doc.verificationToken,
+    resetPasswordToken: doc.resetPasswordToken,
+    resetPasswordExpires: doc.resetPasswordExpires,
+
+    interactionHistory:
+      doc.interactionHistory?.map((i: any) => ({
+        productId: i.product.toString(),
+        interactionType: i.interactionType,
+        timestamp: i.timestamp,
+      })) ?? [],
+
+    preferredCategories: doc.preferredCategories ?? [],
+    engagementScore: doc.engagementScore ?? 0,
+  });
+}
 
   toPlainObject() {
     return {

@@ -5,7 +5,8 @@ import LoadingSpinner from '../LoadingSpinner/LoadingSpinner';
 import { FaCrown, FaStar } from 'react-icons/fa';
 
 interface Product {
-  _id: string;
+  _id?: string;
+  id?: string;
   name: string;
   price: number;
   rating: number;
@@ -90,7 +91,7 @@ export default function TopRatedProducts() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
             {products.map((product, index) => (
               <div 
-                key={product._id} 
+                key={product.id ?? product._id}
                 className={`relative ${index < 3 ? 'order-first' : ''}`}
               >
                 {index < 3 && (
@@ -99,7 +100,7 @@ export default function TopRatedProducts() {
                   </div>
                 )}
                 <ItemCard
-                  id={product._id}
+                  id={product.id ?? product._id}
                   image={product.images?.[0] || '/placeholder.jpg'}
                   name={product.name}
                   currentPrice={product.price}

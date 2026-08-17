@@ -71,7 +71,6 @@ export class Comment {
 
   toPlainObject(): Record<string, unknown> {
     return {
-      _id: this.id,
       id: this.id,
       userId: this.userId,
       productId: this.productId,

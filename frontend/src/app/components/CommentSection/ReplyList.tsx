@@ -69,7 +69,7 @@ export default function ReplyList({
     <div className="space-y-4">
       {replies.map((reply) => (
         <CommentItem
-          key={reply._id}
+          key={reply.id}
           comment={reply}
           onDelete={onDelete}
           onLike={onLike}

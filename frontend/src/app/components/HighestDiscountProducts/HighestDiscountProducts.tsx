@@ -4,7 +4,8 @@ import ItemCard from '../ItemCard/ItemCard';
 import LoadingSpinner from '../LoadingSpinner/LoadingSpinner';
 
 interface Product {
-  _id: string;
+  _id?: string;
+  id?: string;
   name: string;
   price: number;
   rating: number;
@@ -83,9 +84,9 @@ export default function HighestDiscountProducts() {
           {/* Scrollable Container */}
           <div className="flex overflow-x-auto pb-8 -mx-4 px-4 hide-scrollbar gap-6">
             {products.map((product) => (
-              <div key={product._id} className="flex-none w-64 sm:w-72">
+              <div key={product.id ?? product._id} className="flex-none w-64 sm:w-72">
                 <ItemCard
-                  id={product._id}
+                  id={product.id ?? product._id}
                   image={product.images?.[0] || '/placeholder.jpg'}
                   name={product.name}
                   currentPrice={product.price}

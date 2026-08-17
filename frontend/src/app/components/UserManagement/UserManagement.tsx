@@ -26,7 +26,7 @@ const UserManagement = () => {
       const { data } = await response.json();
       const transformedUsers = data.map((user: any) => ({
         ...user,
-        id: user._id,
+        id: user.id ?? user._id,
         _id: undefined
       }));
       
@@ -36,7 +36,7 @@ const UserManagement = () => {
       setStats({
         total: data.length,
         active: data.filter((u: any) => u.status === 'active').length,
-        admins: data.filter((u: any) => u.role === 'admin').length
+        admins: data.filter((u: any) => u.role?.toUpperCase() === 'ADMIN').length
       });
       
       showSuccess('Users loaded successfully');
@@ -75,7 +75,7 @@ const UserManagement = () => {
       
       setUsers(prev => [...prev, {
         ...createdUser,
-        id: createdUser._id,
+        id: createdUser.id ?? createdUser._id,
         _id: undefined
       }]);
       
@@ -87,7 +87,7 @@ const UserManagement = () => {
 
   const handleRemoveUser = async (userId: string) => {
     try {
-      const response = await fetch(`${process.env.NUBLIC_BACKEND_URL}/users/${userId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${userId}`, {
         method: 'DELETE',
       });
 

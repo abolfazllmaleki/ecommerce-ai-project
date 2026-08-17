@@ -5,7 +5,7 @@ export interface User {
   _id?: string; // از سمت بک‌اند می‌آید
   id?: string;  // این را خودمان ایجاد می‌کنیم یا از _id مقدار می‌دهیم
   name: string;
-  lastName?: string;
+  lastname?: string;
   email: string;
   role?: string;
   wishList?: any[]; 

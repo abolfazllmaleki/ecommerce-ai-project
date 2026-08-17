@@ -14,6 +14,7 @@ import ProductDescription from '@/app/components/productDescription/ProductDescr
 
 interface Product {
   _id: string;
+  id?: string;
   name: string;
   description: string;
   price: number;
@@ -33,7 +34,10 @@ interface Product {
 }
 
 export default function ProductDetailClient({ initialProduct }: { initialProduct: Product }) {
-  const [product, setProduct] = useState<Product>(initialProduct);
+  const [product, setProduct] = useState<Product>({
+    ...initialProduct,
+    _id: initialProduct._id || initialProduct.id || '',
+  });
   const [selectedColor, setSelectedColor] = useState(initialProduct.colors[0] || '');
   const [selectedSize, setSelectedSize] = useState(initialProduct.sizes[0] || '');
   const [isFavorite, setIsFavorite] = useState(false);
@@ -80,19 +84,18 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   };
 
   useEffect(() => {
-    const checkWishlistStatus = () => {
-      if (!user || !product) {
-        setIsFavorite(false);
-        return;
-      }
+const checkWishlistStatus = () => {
+  if (!user || !product?.id) {
+    setIsFavorite(false);
+    return;
+  }
 
-      const wishList = user.wishList || [];
-      const productId = product._id?.toString();
+  const isInWishlist = user.wishList?.some(
+    item => item?.id === product.id,
+  ) ?? false;
 
-      const isInWishlist = wishList.some((item) => item?._id?.toString() === productId);
-
-      setIsFavorite(isInWishlist);
-    };
+  setIsFavorite(isInWishlist);
+};
 
     checkWishlistStatus();
     incrementViews();

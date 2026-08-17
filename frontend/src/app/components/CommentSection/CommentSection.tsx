@@ -299,7 +299,7 @@ export default function CommentSection({ productId }: CommentSectionProps) {
         throw new Error('Failed to delete comment');
       }
 
-      setComments(prev => prev.filter(comment => comment._id !== commentId));
+      setComments(prev => prev.filter(comment => comment.id !== commentId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete comment');
     }
@@ -325,9 +325,11 @@ export default function CommentSection({ productId }: CommentSectionProps) {
       }
 
       const updatedComment = await response.json();
-      
-      setComments(prev => prev.map(comment => 
-        comment._id === commentId ? updatedComment : comment
+
+      setComments(prev => prev.map(comment =>
+        comment.id === commentId
+          ? { ...comment, likes: updatedComment.likes, dislikes: updatedComment.dislikes }
+          : comment
       ));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to like comment');
@@ -354,9 +356,11 @@ export default function CommentSection({ productId }: CommentSectionProps) {
       }
 
       const updatedComment = await response.json();
-      
-      setComments(prev => prev.map(comment => 
-        comment._id === commentId ? updatedComment : comment
+
+      setComments(prev => prev.map(comment =>
+        comment.id === commentId
+          ? { ...comment, likes: updatedComment.likes, dislikes: updatedComment.dislikes }
+          : comment
       ));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to dislike comment');

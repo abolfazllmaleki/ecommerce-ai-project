@@ -30,7 +30,7 @@ const Recommendations = () => {
 
       try {
         // Step 1: Fetch the list of recommended product IDs
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/recommend/${user._id}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/recommendations/${user._id}`, {
           headers: {
             'Content-Type': 'application/json',
           }
@@ -51,7 +51,7 @@ const Recommendations = () => {
         // Step 2: Fetch product details for each product ID
         const productDetails = await Promise.all(
           productIds.map(async (id) => {
-            const productResponse = await fetch(`${process.env.BACKEND_URL}/products/${id}`);
+            const productResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/products/${id}`);
             if (!productResponse.ok) {
               throw new Error(`Failed to fetch product details for ID: ${id}`);
             }
@@ -79,8 +79,8 @@ const Recommendations = () => {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {recommendations.map((product) => (
         <ItemCard
-          key={product._id}
-          id={product._id}
+          key={product.id ?? product._id}
+          id={product.id ?? product._id}
           image={product.images[0]}
           name={product.name}
           currentPrice={product.price}

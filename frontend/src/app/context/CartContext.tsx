@@ -133,7 +133,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (token) {
       try {
-        await fetch("/api/cart", {
+        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/cart`, {
           method: "POST",
           body: JSON.stringify({ productId: normalizedProduct._id }),
           headers: {
@@ -162,7 +162,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (token && targetItem) {
       try {
-        await fetch("/api/cart", {
+        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/cart`, {
           method: "PATCH",
           body: JSON.stringify({
             productId: targetItem.product._id,
@@ -190,7 +190,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (token && targetItem) {
       try {
-        await fetch(`/api/cart?productId=${targetItem.product._id}`, {
+        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/cart?productId=${targetItem.product._id}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -201,17 +201,26 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const clearCart = async () => {
+    const itemsToClear = token ? [...cart] : [];
+
     setCart([]);
     setTotal(0);
     localStorage.removeItem("cart");
     localStorage.setItem("cartLastCleared", Date.now().toString());
 
-    if (token) {
+    if (token && itemsToClear.length > 0) {
       try {
-        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/cart/clear`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await Promise.all(
+          itemsToClear.map((item) =>
+            fetch(
+              `${process.env.NEXT_PUBLIC_BACKEND_URL}/cart?productId=${item.product._id}`,
+              {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            )
+          )
+        );
       } catch (error) {
         console.error("Failed to clear server cart:", error);
       }

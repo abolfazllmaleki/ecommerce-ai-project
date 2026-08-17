@@ -223,14 +223,19 @@ function ResetPasswordContent() {
   const validateToken = async (token: string) => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/validate-reset-token/${token}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/reset-password/validate/${token}`,
         {
-          method: "POST",
+          method: "GET",
         }
       );
 
       if (response.ok) {
-        setTokenValid(true);
+        const data = await response.json();
+        if (data?.valid) {
+          setTokenValid(true);
+        } else {
+          setError("Invalid or expired reset token. Please request a new reset link.");
+        }
       } else {
         setError("Invalid or expired reset token. Please request a new reset link.");
       }

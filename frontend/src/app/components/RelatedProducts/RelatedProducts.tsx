@@ -3,7 +3,8 @@ import ItemCard from '../ItemCard/ItemCard';
 import { useState, useEffect } from 'react';
 
 interface Product {
-  _id: string;
+  _id?: string;
+  id?: string;
   name: string;
   images: string[];
   price: number;
@@ -36,7 +37,7 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({
     if (Array.isArray(products)) {
       processedProducts = products;
     } else if (typeof products === 'object' && products !== null) {
-      if (products._id) {
+      if (products._id || products.id) {
         processedProducts = [products];
       } 
       else if (products.products && Array.isArray(products.products)) {
@@ -97,9 +98,9 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({
         <div className="relative">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {productsArray.map((product) => (
-              <div key={product._id} className="transform transition-all duration-300 hover:-translate-y-1">
+              <div key={product.id ?? product._id} className="transform transition-all duration-300 hover:-translate-y-1">
                 <ItemCard
-                  id={product._id}
+                  id={product.id ?? product._id}
                   image={product.images?.[0] || '/placeholder-image.jpg'}
                   name={product.name}
                   currentPrice={product.price}

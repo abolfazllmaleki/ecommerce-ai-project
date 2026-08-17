@@ -96,7 +96,7 @@ export interface User {
   id?: string;
   _id?:string;
   name: string;
-  lastName?:string;
+  lastname?:string;
   email: string;
   role?: string;
 }
@@ -113,7 +113,7 @@ export interface HomeContent {
 //   href: string;
 // }
 export interface Comment {
-  _id: string;
+  id: string;
   userId: string | User;
   productId: string;
   content: string;

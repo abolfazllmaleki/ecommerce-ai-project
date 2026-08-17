@@ -26,26 +26,33 @@ export class UserRepository implements IUserRepository {
     return UserMapper.toDomain(saved);
   }
 
-  async findById(
-    id: string,
-    options?: { populateWishlist?: boolean; populateRecommendations?: boolean },
-  ): Promise<User | null> {
-    if (!Types.ObjectId.isValid(id)) return null;
-
-    let query = this.model.findById(id);
-    if (options?.populateWishlist) {
-      query = query.populate('wishList');
-    }
-    if (options?.populateRecommendations) {
-      query = query.populate('recommendations');
-    }
-
-    const doc = await query.exec();
-    return doc ? UserMapper.toDomain(doc) : null;
+async findById(
+  id: string,
+  options?: {
+    populateWishlist?: boolean;
+    populateRecommendations?: boolean;
+  },
+): Promise<User | null> {
+  if (!Types.ObjectId.isValid(id)) {
+    return null;
   }
 
+  let query = this.model.findById(id);
+
+  // Wishlist باید همیشه Product کامل باشد
+  query = query.populate('wishList');
+
+  if (options?.populateRecommendations) {
+    query = query.populate('recommendations');
+  }
+
+  const doc = await query.exec();
+
+  return doc ? UserMapper.toDomain(doc) : null;
+}
+
   async findByEmail(email: string): Promise<User | null> {
-    const doc = await this.model.findOne({ email }).exec();
+    const doc = await this.model.findOne({ email }).populate('wishList').exec();
     return doc ? UserMapper.toDomain(doc) : null;
   }
 
@@ -88,8 +95,11 @@ export class UserRepository implements IUserRepository {
         { $addToSet: { wishList: new Types.ObjectId(productId) } },
         { new: true },
       )
-      .populate('wishList', '_id')
+      .populate('wishList')
       .exec();
+
+
+
 
     if (!doc) throw new Error('USER_NOT_FOUND');
     return UserMapper.toDomain(doc);

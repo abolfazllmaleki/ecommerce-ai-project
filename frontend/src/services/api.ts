@@ -2,7 +2,7 @@
 import { CATEGORIES } from "@/app/types/types";
 import axios from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'; // آدرس بک‌اند NestJS
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3005/api'; // آدرس بک‌اند NestJS
 
 export const productService = {
   async searchProducts(params: {

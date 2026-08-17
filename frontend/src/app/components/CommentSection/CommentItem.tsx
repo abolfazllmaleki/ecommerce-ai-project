@@ -446,21 +446,21 @@ export default function CommentItem({
   const [userRating, setUserRating] = useState<number | null>(null);
   
   const user = typeof comment.userId === 'string' ? undefined : comment.userId;
-  const userName = user ? `${user.name} ${user.lastName || ''}`.trim() : 'Anonymous User';
+  const userName = user ? `${user.name} ${user.lastname || ''}`.trim() : 'Anonymous User';
   
   const isOwner = currentUserId && (
     typeof comment.userId === 'string' 
-      ? comment.userId === currentUserId 
+      ? comment.userId === currentUserId
       : user?.id === currentUserId
   );
 
   useEffect(() => {
     const fetchUserRating = async () => {
-      if (!user?._id || !comment.productId) return;
+      if (!user?.id || !comment.productId) return;
       
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${user._id}/product/${comment.productId}`
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${user.id}/product/${comment.productId}`
         );
 
         
@@ -507,7 +507,7 @@ export default function CommentItem({
             
             {isOwner && (
               <button
-                onClick={() => onDelete(comment._id)}
+                onClick={() => onDelete(comment.id)}
                 className="text-red-600 hover:text-red-800 text-sm font-medium transition-colors"
               >
                 Delete
@@ -526,7 +526,7 @@ export default function CommentItem({
           
           <div className="flex items-center space-x-6">
             <button
-              onClick={() => onLike(comment._id)}
+              onClick={() => onLike(comment.id)}
               disabled={!currentUserId}
               className={`flex items-center space-x-1 ${
                 comment.hasLiked 
@@ -539,7 +539,7 @@ export default function CommentItem({
             </button>
             
             <button
-              onClick={() => onDislike(comment._id)}
+              onClick={() => onDislike(comment.id)}
               disabled={!currentUserId}
               className={`flex items-center space-x-1 ${
                 comment.hasDisliked 
@@ -573,7 +573,7 @@ export default function CommentItem({
             <div className="mt-4 ml-4 pl-4 border-l-2 border-gray-200">
               <CommentForm
                 productId={comment.productId}
-                parentCommentId={comment._id}
+                parentCommentId={comment.id}
                 onCommentAdded={() => {
                   setShowReplyForm(false);
                   setShowReplies(true);
@@ -587,7 +587,7 @@ export default function CommentItem({
           {showReplies && comment.replyCount > 0 && (
             <div className="mt-4 ml-4 pl-4 border-l-2 border-gray-200">
               <ReplyList
-                commentId={comment._id}
+                commentId={comment.id}
                 onDelete={onDelete}
                 onLike={onLike}
                 onDislike={onDislike}

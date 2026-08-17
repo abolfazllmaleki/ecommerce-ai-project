@@ -242,16 +242,39 @@ export class CommentRepository implements ICommentRepository {
     comments: CommentDocument[],
     userId?: string,
   ): Record<string, unknown>[] {
-    if (!userId) {
-      return comments.map(c => ({ ...c.toObject() }));
+    const userObjectId = userId ? new Types.ObjectId(userId) : null;
+
+    return comments.map(comment => {
+      const { _id, userId: author, ...rest } = comment.toObject();
+
+      const serialized: Record<string, unknown> = {
+        ...rest,
+        id: _id?.toString(),
+        userId: this.serializeAuthor(author),
+      };
+
+      if (!userObjectId) return serialized;
+
+      return {
+        ...serialized,
+        hasLiked: comment.likedBy.some(id => id.equals(userObjectId)),
+        hasDisliked: comment.dislikedBy.some(id => id.equals(userObjectId)),
+      };
+    });
+  }
+
+  private serializeAuthor(author: any): unknown {
+    if (!author) return author;
+
+    // Unpopulated ref: keep it as a plain id string.
+    if (author instanceof Types.ObjectId) return author.toString();
+
+    // Populated author document: expose `id` instead of `_id`.
+    if (typeof author === 'object' && author._id) {
+      const { _id, ...rest } = author;
+      return { ...rest, id: _id.toString() };
     }
 
-    const userObjectId = new Types.ObjectId(userId);
-
-    return comments.map(comment => ({
-      ...comment.toObject(),
-      hasLiked: comment.likedBy.some(id => id.equals(userObjectId)),
-      hasDisliked: comment.dislikedBy.some(id => id.equals(userObjectId)),
-    }));
+    return author;
   }
 }

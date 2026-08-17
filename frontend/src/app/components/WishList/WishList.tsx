@@ -40,7 +40,7 @@ const WishList = () => {
         },
         body: JSON.stringify({ productId }),
       });
-      setWishlist(wishlist.filter((item: any) => item._id !== productId));
+      setWishlist(wishlist.filter((item: any) => (item._id ?? item.id) !== productId));
     } catch (err) {
       console.error('Failed to remove item:', err);
     }
@@ -67,8 +67,8 @@ const WishList = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {wishlist.map((product: any) => (
             <ItemCard
-              key={product._id}
-              id={product._id}
+              key={product._id ?? product.id}
+              id={product._id ?? product.id}
               image={product.images[0]}
               name={product.name}
               currentPrice={product.price}
@@ -81,7 +81,7 @@ const WishList = () => {
                   className="absolute top-2 right-2 p-2 text-red-500 hover:text-red-600 z-10 bg-white rounded-full shadow-sm"
                   onClick={(e) => {
                     e.preventDefault();
-                    handleRemove(product._id);
+                    handleRemove(product._id ?? product.id);
                   }}
                 >
                   <FiTrash2 className="text-xl" />

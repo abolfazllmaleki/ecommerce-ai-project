@@ -275,34 +275,34 @@ export class Product {
     };
   }
 
-  static fromPersistence(data: any): Product {
-    return new Product({
-      id: data?._id?.toString?.() ?? data?.id ?? null,
-      name: data.name,
-      description: data.description,
-      categoryId: data.categoryId?.toString?.() ?? data.categoryId,
-      tags: data.tags,
-      price: data.price,
-      stock: data.stock,
-      brand: data.brand,
-      images: data.images,
-      colors: data.colors,
-      sizes: data.sizes,
-      rating: data.rating,
-      numberOfReviews: data.numberOfReviews,
-      views: data.views,
-      purchases: data.purchases,
-      wishlistAdds: data.wishlistAdds,
-      discount: data.discount,
-      isFeatured: data.isFeatured,
-      similarProducts: (data.similarProducts ?? []).map((id: any) =>
-        id?.toString?.() ?? id,
-      ),
-      userFeedbackKeywords: data.userFeedbackKeywords,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
-    });
-  }
+static fromPersistence(data: any): Product {
+  return new Product({
+    id: data?._id?.toString?.() ?? data?.id ?? null,
+    name: data.name,
+    description: data.description,
+    categoryId: data.categoryId?.toString?.() ?? data.categoryId,
+    tags: data.tags,
+    price: data.price,
+    stock: data.stock,
+    brand: data.brand,
+    images: data.images,
+    colors: data.colors,
+    sizes: data.sizes,
+    rating: data.rating,
+    numberOfReviews: data.numberOfReviews,
+    views: data.views,
+    purchases: data.purchases,
+    wishlistAdds: data.wishlistAdds,
+    discount: data.discount,
+    isFeatured: data.isFeatured,
+    similarProducts: (data.similarProducts ?? []).map(
+      (id: any) => id?.toString?.() ?? id,
+    ),
+    userFeedbackKeywords: data.userFeedbackKeywords,
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+  });
+}
   static rehydrate(data: any): Product {
   return new Product({
     id: data.id ?? null,

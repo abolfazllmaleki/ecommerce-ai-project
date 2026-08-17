@@ -90,12 +90,12 @@ export default function CommentList({
     <div className="space-y-6">
       {comments.map((comment) => (
         <CommentItem
-          key={comment._id}
+          key={comment.id}
           comment={comment}
           onDelete={onDelete}
           onLike={onLike}
           onDislike={onDislike}
-          currentUserId={user?._id}
+          currentUserId={user?.id}
           token={token}
         />
       ))}
