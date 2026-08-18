@@ -14,7 +14,8 @@ import {
   FiPackage,
   FiFilter,
   FiChevronDown,
-  FiChevronUp
+  FiChevronUp,
+  FiShoppingBag
 } from 'react-icons/fi';
 import { Order } from '../../types/types';
 
@@ -241,21 +242,157 @@ const OrdersManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-800">Orders Management</h2>
-          <p className="text-gray-500 text-sm">Manage and track all customer orders</p>
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={fetchOrders}
-            className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl border border-gray-200 shadow-xs transition-all hover:shadow-sm"
-          >
-            <FiRefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </button>
-        </div>
+      <header
+  className="
+    relative
+    overflow-hidden
+    rounded-3xl
+    border
+    border-red-100
+    bg-white
+    px-5
+    py-5
+    shadow-sm
+    md:px-7
+    md:py-6
+  "
+>
+  {/* Decorative background */}
+  <div
+    className="
+      pointer-events-none
+      absolute
+      -right-20
+      -top-20
+      h-52
+      w-52
+      rounded-full
+      bg-red-100/60
+      blur-3xl
+    "
+  />
+
+  <div
+    className="
+      pointer-events-none
+      absolute
+      -bottom-24
+      left-1/3
+      h-40
+      w-40
+      rounded-full
+      bg-red-50
+      blur-3xl
+    "
+  />
+
+  <div
+    className="
+      relative
+      flex
+      flex-col
+      gap-5
+      sm:flex-row
+      sm:items-center
+      sm:justify-between
+    "
+  >
+    {/* Title */}
+    <div className="flex items-center gap-4">
+<div
+  className="
+    flex
+    h-12
+    w-12
+    shrink-0
+    items-center
+    justify-center
+    rounded-2xl
+    bg-red-100
+    text-[#DF2648]
+    shadow-sm
+  "
+>
+  <FiShoppingBag size={22} />
+
       </div>
+
+      <div>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+            Orders Management
+          </h1>
+
+          <span
+            className="
+              hidden
+              rounded-full
+              bg-red-100
+              px-2.5
+              py-1
+              text-[10px]
+              font-bold
+              uppercase
+              tracking-wider
+              text-[#DF2648]
+              sm:inline-flex
+            "
+          >
+            Admin
+          </span>
+        </div>
+
+        <p className="mt-1 text-sm text-gray-500">
+          Manage and track all customer orders
+        </p>
+      </div>
+    </div>
+
+    {/* Refresh */}
+    <button
+      type="button"
+      onClick={fetchOrders}
+      disabled={loading}
+      className="
+        group
+        inline-flex
+        items-center
+        justify-center
+        gap-2
+        rounded-xl
+        border
+        border-red-100
+        bg-white
+        px-4
+        py-2.5
+        text-sm
+        font-semibold
+        text-gray-700
+        shadow-sm
+        transition-all
+        duration-200
+        hover:-translate-y-0.5
+        hover:border-red-200
+        hover:bg-red-50
+        hover:text-[#DF2648]
+        hover:shadow-md
+        disabled:cursor-not-allowed
+        disabled:opacity-50
+      "
+    >
+      <FiRefreshCw
+        size={16}
+        className={
+          loading
+            ? 'animate-spin'
+            : 'transition-transform duration-300 group-hover:rotate-180'
+        }
+      />
+
+      Refresh
+    </button>
+  </div>
+</header>
 
       {/* Filter and Search Section */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">

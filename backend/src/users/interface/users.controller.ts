@@ -13,6 +13,7 @@ import {
   ValidationPipe,
   UseGuards,
   Request,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateUserDto } from '../dto/create-user.dto';
@@ -34,6 +35,9 @@ import { GenerateRecommendationsUseCase } from '../application/use-cases/generat
 import { AddPreferredCategoryUseCase } from '../application/use-cases/add-preferred-category.usecase';
 import { RemovePreferredCategoryUseCase } from '../application/use-cases/remove-preferred-category.usecase';
 import { GetUserProductRatingUseCase } from '../application/use-cases/get-user-product-rating.usecase';
+import { UpdateAdminUserUseCase } from '../application/use-cases/update-user-admin.usecase';
+import { FindAllAdminUsersUseCase } from '../application/use-cases/Find-all-user-admin-usecase';
+import { UpdateAdminUserDto } from '../dto/update-admin-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -52,8 +56,44 @@ export class UsersController {
     private readonly addPreferredCategory: AddPreferredCategoryUseCase,
     private readonly removePreferredCategory: RemovePreferredCategoryUseCase,
     private readonly getUserProductRating: GetUserProductRatingUseCase,
+    private readonly findAllAdminUsersUseCase: FindAllAdminUsersUseCase,
+    private readonly updateAdminUserUseCase: UpdateAdminUserUseCase,
   ) {}
 
+  @Get('admin')
+  async adminFindAll(
+    @Query(
+      'page',
+      new ParseIntPipe({
+        optional: true,
+      }),
+    )
+    page = 1,
+
+    @Query(
+      'limit',
+      new ParseIntPipe({
+        optional: true,
+      }),
+    )
+    limit = 20,
+  ) {
+    return this.findAllAdminUsersUseCase.execute(
+      page,
+      limit,
+    );
+  }
+
+  @Patch('admin/:id')
+  async adminUpdate(
+    @Param('id') id: string,
+    @Body() dto: UpdateAdminUserDto,
+  ) {
+    return this.updateAdminUserUseCase.execute(
+      id,
+      dto,
+    );
+  }
   @Post()
   @UsePipes(new ValidationPipe({ transform: true }))
   async create(@Body() createUserDto: CreateUserDto) {
@@ -184,4 +224,7 @@ export class UsersController {
   ) {
     return this.getUserProductRating.execute(userId, productId);
   }
+
+
+
 }

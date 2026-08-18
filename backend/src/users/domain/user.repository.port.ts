@@ -1,5 +1,5 @@
 import { User } from './user.entity';
-
+import { UserRole } from './user.entity';
 export interface PaginatedUsers {
   items: User[];
   total: number;
@@ -11,11 +11,45 @@ export interface ProductRatingAggregate {
   averageRating: number;
   count: number;
 }
+export interface UpdateUserData {
+  name?: string;
+  lastname?: string;
+  email?: string;
+  role?: UserRole;
+  isEmailVerified?: boolean;
+}
 
 export interface UserProductRatingResult {
   rating: number;
   hasRated: boolean;
 }
+export interface AdminUserListItem {
+  id: string;
+  name: string;
+  lastname?: string;
+  email: string;
+  role: UserRole;
+  isEmailVerified: boolean;
+  createdAt: Date;
+  lastLoggedIn: Date;
+  engagementScore: number;
+}
+
+export interface PaginatedAdminUsers {
+  items: AdminUserListItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface UpdateUserData {
+  name?: string;
+  lastname?: string;
+  email?: string;
+  role?: UserRole;
+  isEmailVerified?: boolean;
+}
+
 
 export interface IUserRepository {
   create(user: User): Promise<User>;
@@ -28,9 +62,22 @@ export interface IUserRepository {
   update(user: User): Promise<User | null>;
   delete(id: string): Promise<boolean>;
 
+updateAdmin(
+  userId: string,
+  data: UpdateUserData,
+): Promise<User | null>; 
   addToWishlist(userId: string, productId: string): Promise<User>;
   removeFromWishlist(userId: string, productId: string): Promise<User>;
   getWishlistProductIds(userId: string): Promise<string[]>;
+    findAdminUsers(
+    page: number,
+    limit: number,
+  ): Promise<PaginatedAdminUsers>;
+
+  findAdminUserById(
+    id: string,
+  ): Promise<User | null>;
+
 
   addInteraction(
     userId: string,

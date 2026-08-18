@@ -4,8 +4,10 @@ import { Model, Types } from 'mongoose';
 import * as crypto from 'crypto';
 import {
   IUserRepository,
+  PaginatedAdminUsers,
   PaginatedUsers,
   ProductRatingAggregate,
+  UpdateUserData,
   UserProductRatingResult,
 } from '../domain/user.repository.port';
 import { User } from '../domain/user.entity';
@@ -39,7 +41,6 @@ async findById(
 
   let query = this.model.findById(id);
 
-  // Wishlist باید همیشه Product کامل باشد
   query = query.populate('wishList');
 
   if (options?.populateRecommendations) {
@@ -56,20 +57,100 @@ async findById(
     return doc ? UserMapper.toDomain(doc) : null;
   }
 
-  async findAllPaginated(page: number, limit: number): Promise<PaginatedUsers> {
-    const skip = (page - 1) * limit;
-    const [docs, total] = await Promise.all([
-      this.model.find().skip(skip).limit(limit).exec(),
-      this.model.countDocuments().exec(),
-    ]);
+async findAllPaginated(
+  page: number,
+  limit: number,
+): Promise<PaginatedUsers> {
+  const skip = (page - 1) * limit;
 
-    return {
-      items: docs.map(doc => UserMapper.toDomain(doc)),
-      total,
-      page,
-      limit,
-    };
+  const [docs, total] = await Promise.all([
+    this.model
+      .find()
+      .populate('wishList')
+      .skip(skip)
+      .limit(limit)
+      .exec(),
+
+    this.model.countDocuments().exec(),
+  ]);
+
+  return {
+    items: docs.map((doc) => UserMapper.toDomain(doc)),
+    total,
+    page,
+    limit,
+  };
+}
+async findAdminUsers(
+  page: number,
+  limit: number,
+): Promise<PaginatedAdminUsers> {
+  const skip = (page - 1) * limit;
+
+  const [docs, total] = await Promise.all([
+    this.model
+      .find()
+      .select(
+        '_id name lastname email role isEmailVerified createdAt lastLoggedIn engagementScore',
+      )
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .exec(),
+
+    this.model.countDocuments().exec(),
+  ]);
+
+  return {
+    items: docs.map((doc) =>
+      UserMapper.toAdminListItem(doc),
+    ),
+    total,
+    page,
+    limit,
+  };
+}
+
+async findAdminUserById(
+  id: string,
+): Promise<User | null> {
+  if (!Types.ObjectId.isValid(id)) {
+    return null;
   }
+
+  const doc = await this.model
+    .findById(id)
+    .populate('wishList')
+    .populate('recommendations')
+    .exec();
+
+  return doc
+    ? UserMapper.toDomain(doc)
+    : null;
+}
+
+async updateAdmin(
+  userId: string,
+  data: UpdateUserData,
+): Promise<User | null> {
+  if (!Types.ObjectId.isValid(userId)) {
+    return null;
+  }
+
+  const updated = await this.model
+    .findByIdAndUpdate(
+      userId,
+      { $set: data },
+      { new: true },
+    )
+    .exec();
+
+  if (!updated) {
+    return null;
+  }
+
+  return UserMapper.toDomainForAdmin(updated);
+}
 
   async update(user: User): Promise<User | null> {
     if (!user.id || !Types.ObjectId.isValid(user.id)) return null;

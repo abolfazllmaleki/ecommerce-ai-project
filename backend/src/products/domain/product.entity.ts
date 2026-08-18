@@ -110,12 +110,12 @@ export class Product {
     colors?: string[];
     sizes?: string[];
   }): void {
-    if (params.name !== undefined) {
-      if (!params.name || params.name.trim().length < 3) {
-        throw new Error('نام محصول باید حداقل ۳ کاراکتر باشد.');
-      }
-      this.name = params.name;
-    }
+    // if (params.name !== undefined) {
+    //   if (!params.name || params.name.trim().length < 3) {
+    //     throw new Error('نام محصول باید حداقل ۳ کاراکتر باشد.');
+    //   }
+    //   this.name = params.name;
+    // }
 
     if (params.categoryId !== undefined) {
       if (!params.categoryId.trim()) {

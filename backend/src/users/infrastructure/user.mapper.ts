@@ -7,6 +7,35 @@ export class UserMapper {
     return User.fromPersistence(doc);
   }
 
+  static toAdminListItem(doc: any) {
+  return {
+    id: doc._id?.toString(),
+    name: doc.name,
+    lastname: doc.lastname,
+    email: doc.email,
+    role: doc.role,
+    isEmailVerified: doc.isEmailVerified,
+    createdAt: doc.createdAt,
+    lastLoggedIn: doc.lastLoggedIn,
+    engagementScore: doc.engagementScore ?? 0,
+  };
+}
+  static toDomainForAdmin(doc: UserDocument): User {
+    return User.fromPersistence({
+      ...doc.toObject(),
+      wishList: [],
+    });
+  }
+  static toPersistenceForAdmin(user: User) {
+  return {
+    name: user.name,
+    lastname: user.lastname,
+    email: user.email,
+    role: user.role,
+    isEmailVerified: user.isEmailVerified,
+  };
+}
+
   static toPersistence(user: User): Record<string, unknown> {
 
   

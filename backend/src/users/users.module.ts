@@ -28,6 +28,8 @@ import { RemovePreferredCategoryUseCase } from './application/use-cases/remove-p
 import { GetUsersByEngagementUseCase } from './application/use-cases/get-users-by-engagement.usecase';
 import { GetInteractionHistoryUseCase } from './application/use-cases/get-interaction-history.usecase';
 import { GetUserProductRatingUseCase } from './application/use-cases/get-user-product-rating.usecase';
+import { FindAllAdminUsersUseCase } from './application/use-cases/Find-all-user-admin-usecase';
+import { UpdateAdminUserUseCase } from './application/use-cases/update-user-admin.usecase';
 
 @Module({
   imports: [
@@ -44,7 +46,9 @@ import { GetUserProductRatingUseCase } from './application/use-cases/get-user-pr
     },
 
     CreateUserUseCase,
+    FindAllAdminUsersUseCase,
     FindUserByEmailUseCase,
+    UpdateAdminUserUseCase,
     FindUserByIdUseCase,
     FindAllUsersPaginatedUseCase,
     UpdateUserUseCase,

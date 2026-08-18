@@ -126,9 +126,7 @@ async search(criteria: SearchCriteria): Promise<PaginatedProducts> {
   const trimmedQuery = rawQuery.trim();
   const hasTextQuery = trimmedQuery.length > 0;
 
-  console.log('=== [DEBUG START] =====================================');
-  console.log('1. INCOMING SEARCH CRITERIA:', JSON.stringify(criteria, null, 2));
-  console.log('2. NORMALIZED QUERY:', JSON.stringify(trimmedQuery));
+
 
   // 1) Text search
   if (hasTextQuery) {
@@ -195,8 +193,7 @@ async search(criteria: SearchCriteria): Promise<PaginatedProducts> {
     }
   }
 
-  console.log('3. DATABASE FILTER:', JSON.stringify(filter, null, 2));
-  console.log('4. DATABASE SORT:', JSON.stringify(sort, null, 2));
+
 
   try {
     const projection = hasTextQuery
@@ -212,9 +209,7 @@ async search(criteria: SearchCriteria): Promise<PaginatedProducts> {
 
     const total = await this.model.countDocuments(filter).exec();
 
-    console.log(`5. RAW DOCS FOUND FROM DB (Length: ${docs.length})`);
-    console.log('6. TOTAL COUNT:', total);
-    console.log('=== [DEBUG END] =======================================');
+
 
     return {
       items: docs.map(doc => ProductMapper.toDomain(doc)),
@@ -224,7 +219,7 @@ async search(criteria: SearchCriteria): Promise<PaginatedProducts> {
     };
   } catch (error) {
     console.error('❌ DATABASE QUERY ERROR:', error);
-    console.log('=== [DEBUG END WITH ERROR] ============================');
+
     throw error;
   }
 }
