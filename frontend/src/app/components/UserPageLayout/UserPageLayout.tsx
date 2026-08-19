@@ -1,52 +1,74 @@
-// UserPageLayout.tsx
 'use client';
-import React, { ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { FiLogOut } from 'react-icons/fi';
-import { useAuth } from '@/app/context/AuthContext';
 
-interface LayoutProps {
-  children: ReactNode;
+import React from 'react';
+import { motion } from 'framer-motion';
+
+interface UserPageLayoutProps {
+  children: React.ReactNode;
+  title?: string;
+  description?: string;
 }
 
-const UserPageLayout: React.FC<LayoutProps> = ({ children }) => {
-  const router = useRouter();
-  const { logout } = useAuth(); 
-
-
-  const handleLogout = () => {
-    logout(); // Call the context logout function
-    router.push('/login');
-  };
-
+const UserPageLayout: React.FC<UserPageLayoutProps> = ({
+  children,
+  title = 'My Account',
+  description = 'Manage your profile, addresses and account preferences.',
+}) => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      {/* Header Section */}
-      <motion.header 
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="bg-white shadow-sm sticky top-0 z-10"
-      >
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-800 bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent">
-            My Account
-          </h1>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all"
-          >
-            <FiLogOut />
-            <span>Logout</span>
-          </motion.button>
-        </div>
-      </motion.header>
+    <main className="min-h-screen bg-[#fcfcfd]">
+      <div className="mx-auto w-full max-w-[1380px] px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
 
-      {/* Main Content */}
-      <main className="container mx-auto px-6 py-8">{children}</main>
-    </div>
+        {/* ============================================================ */}
+        {/* PAGE HEADER */}
+        {/* ============================================================ */}
+
+        <motion.header
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          className="mb-7"
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+
+            <div>
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#DF2648]">
+                Account
+              </p>
+
+              <h1 className="text-3xl font-bold tracking-tight text-gray-950 sm:text-4xl">
+                {title}
+              </h1>
+
+              <p className="mt-2 max-w-xl text-sm leading-6 text-gray-500">
+                {description}
+              </p>
+            </div>
+
+            <div className="hidden items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-500 shadow-sm sm:flex">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              Account active
+            </div>
+
+          </div>
+        </motion.header>
+
+        {/* ============================================================ */}
+        {/* CONTENT */}
+        {/* ============================================================ */}
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: 0.4,
+            delay: 0.05,
+          }}
+        >
+          {children}
+        </motion.div>
+
+      </div>
+    </main>
   );
 };
 

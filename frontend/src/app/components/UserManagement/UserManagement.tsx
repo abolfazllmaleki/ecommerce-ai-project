@@ -89,22 +89,21 @@ const UserManagement = () => {
   // Auth
   // ==========================================================================
 
-  const getAuthHeaders = (): HeadersInit => {
-    const token =
-      typeof window !== 'undefined'
-        ? localStorage.getItem('accessToken')
-        : null;
+const getAuthHeaders = (): HeadersInit => {
+  const token =
+    typeof window !== 'undefined'
+      ? localStorage.getItem('token')
+      : null;
 
-    return {
-      'Content-Type': 'application/json',
-
-      ...(token
-        ? {
-            Authorization: `Bearer ${token}`,
-          }
-        : {}),
-    };
+  return {
+    'Content-Type': 'application/json',
+    ...(token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {}),
   };
+};
 
   // ==========================================================================
   // Fetch Users

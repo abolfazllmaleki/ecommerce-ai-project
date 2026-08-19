@@ -1,24 +1,22 @@
-import Sidebar from '@/app/components/Sidebar/Sidebar';
-import WishList from '@/app/components/WishList/WishList';
+'use client';
+
+import React from 'react';
 import UserPageLayout from '@/app/components/UserPageLayout/UserPageLayout';
+import AccountPageShell from '@/app/components/AccountPageShell/AccountPageShell';
 import Recommendations from './rec';
 
-const Page = () => {
+const RecommendationsPage = () => {
   return (
     <UserPageLayout>
-      <div className="flex gap-6">
-        {/* Sidebar */}
-        <div className="w-1/4">
-          <Sidebar />
-        </div>
-
-        {/* Main Content */}
-        <div className="w-3/4">
-          <Recommendations />
-        </div>
-      </div>
+      <AccountPageShell
+        title="Recommended For You"
+        description="Discover products selected based on your interests."
+        compact
+      >
+        <Recommendations />
+      </AccountPageShell>
     </UserPageLayout>
   );
 };
 
-export default Page;
+export default RecommendationsPage;

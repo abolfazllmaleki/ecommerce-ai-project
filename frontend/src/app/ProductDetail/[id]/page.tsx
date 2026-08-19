@@ -22,6 +22,27 @@ async function getRelatedProducts(id: string) {
   return res.json();
 }
 
+// export default async function ProductPage({
+//   params,
+// }: {
+//   params: Promise<{ id: string }> | { id: string };
+// }) {
+//   const resolvedParams = await params;
+//   const id = resolvedParams.id;
+
+//   const product = await getProduct(id);
+//   const relatedProducts = await getRelatedProducts(id);
+
+//   return (
+//     <Suspense fallback={<LoadingSpinner />}>
+//       <ProductDetailClient initialProduct={product} />
+//       <RelatedProducts products={relatedProducts} />
+//       <div className="container mx-auto px-4 py-8">
+//         <CommentSection productId={id} />
+//       </div>
+//     </Suspense>
+//   );
+// }
 export default async function ProductPage({
   params,
 }: {
@@ -30,16 +51,20 @@ export default async function ProductPage({
   const resolvedParams = await params;
   const id = resolvedParams.id;
 
-  const product = await getProduct(id);
-  const relatedProducts = await getRelatedProducts(id);
+  const [product, relatedProducts] = await Promise.all([
+    getProduct(id),
+    getRelatedProducts(id),
+  ]);
 
   return (
-    <Suspense fallback={<LoadingSpinner />}>
+    <>
       <ProductDetailClient initialProduct={product} />
+
       <RelatedProducts products={relatedProducts} />
+
       <div className="container mx-auto px-4 py-8">
         <CommentSection productId={id} />
       </div>
-    </Suspense>
+    </>
   );
 }

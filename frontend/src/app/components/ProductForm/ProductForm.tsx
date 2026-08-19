@@ -1,5 +1,25 @@
 'use client';
+
 import { useState, useRef, useEffect } from 'react';
+import {
+  FiPlus,
+  FiX,
+  FiMaximize2,
+  FiMinimize2,
+  FiPackage,
+  FiTag,
+  FiDollarSign,
+  FiLayers,
+  FiImage,
+  FiFileText,
+  FiSettings,
+  FiAlertCircle,
+  FiCheckCircle,
+  FiChevronDown,
+  FiUploadCloud,
+  FiTrash2,
+} from 'react-icons/fi';
+
 import { Product, Category } from '../../types/types';
 import DescriptionEditor from '../DescriptionEditor/DescriptionEditor';
 
@@ -9,10 +29,24 @@ interface ProductFormProps {
   onCancel?: () => void;
 }
 
-const ProductForm = ({ onSubmit, editingProduct = null, onCancel }: ProductFormProps) => {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(false);
-const [newProduct, setNewProduct] = useState<any>(editingProduct || {
+interface ProductFormState {
+  name: string;
+  price: number;
+  discount: number;
+  stock: number;
+  sizes: string[];
+  colors: string[];
+  images: string[];
+  description: string;
+  specifications: string;
+  adminNote: string;
+  categoryId: string;
+  brand: string;
+  tags: string[];
+  details: { key: string; value: string }[];
+}
+
+const EMPTY_PRODUCT: ProductFormState = {
   name: '',
   price: 0,
   discount: 0,
@@ -23,48 +57,170 @@ const [newProduct, setNewProduct] = useState<any>(editingProduct || {
   description: '',
   specifications: '',
   adminNote: '',
-  categoryId: '', // Change from category to categoryId
+  categoryId: '',
   brand: '',
   tags: [],
   details: [],
-});
+};
+
+const commonColors = [
+  '#ef4444',
+  '#f97316',
+  '#eab308',
+  '#22c55e',
+  '#3b82f6',
+  '#6366f1',
+  '#8b5cf6',
+  '#ec4899',
+  '#6b7280',
+  '#000000',
+];
+
+const commonAdminNotes = [
+  'Limited stock - only a few left',
+  'Free shipping on this product',
+  'Best seller - reorder soon',
+  'New arrival - promote in marketing',
+  'Seasonal product - will be discontinued after season',
+  'On sale - limited time offer',
+  'Custom order possible - contact for details',
+  'Pre-order available - ships in 2-3 weeks',
+];
+
+const ProductForm = ({
+  onSubmit,
+  editingProduct = null,
+  onCancel,
+}: ProductFormProps) => {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+
+  const [newProduct, setNewProduct] =
+    useState<ProductFormState>(EMPTY_PRODUCT);
 
   const [tempImages, setTempImages] = useState<File[]>([]);
   const [tempTag, setTempTag] = useState('');
   const [customColor, setCustomColor] = useState('#3b82f6');
+
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-  const [detailKey, setDetailKey] = useState('');
-  const [detailValue, setDetailValue] = useState('');
+  const [showAdminSuggestions, setShowAdminSuggestions] = useState(false);
+
   const [isExpanded, setIsExpanded] = useState(false);
-  const [adminNoteSuggestions, setAdminNoteSuggestions] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const [nameTouched, setNameTouched] = useState(false);
+
   const colorPickerRef = useRef<HTMLDivElement>(null);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const commonAdminNotes = [
-    "Limited stock - only a few left",
-    "Free shipping on this product",
-    "Best seller - reorder soon",
-    "New arrival - promote in marketing",
-    "Seasonal product - will be discontinued after season",
-    "On sale - limited time offer",
-    "Custom order possible - contact for details",
-    "Pre-order available - ships in 2-3 weeks"
-  ];
-   useEffect(() => {
+  /*
+   * -----------------------------------------
+   * Helpers
+   * -----------------------------------------
+   */
+
+  const getInitialProduct = (): ProductFormState => {
+    if (!editingProduct) {
+      return {
+        ...EMPTY_PRODUCT,
+        sizes: [],
+        colors: [],
+        images: [],
+        tags: [],
+        details: [],
+      };
+    }
+
+    const categoryValue =
+      typeof editingProduct.category === 'object'
+        ? editingProduct.category?._id
+        : editingProduct.category;
+
+    return {
+      ...EMPTY_PRODUCT,
+      ...(editingProduct as any),
+      categoryId:
+        categoryValue ||
+        (editingProduct as any).categoryId ||
+        '',
+      sizes: editingProduct.sizes || [],
+      colors: editingProduct.colors || [],
+      images: editingProduct.images || [],
+      tags: editingProduct.tags || [],
+      // details: editingProduct.details || [],
+    };
+  };
+
+  const setField = <K extends keyof ProductFormState>(
+    field: K,
+    value: ProductFormState[K]
+  ) => {
+    setNewProduct((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const showError = (message: string) => {
+    setError(message);
+
+    window.setTimeout(() => {
+      setError(null);
+    }, 5000);
+  };
+
+  const showSuccess = (message: string) => {
+    setSuccess(message);
+
+    window.setTimeout(() => {
+      setSuccess(null);
+    }, 4000);
+  };
+
+  /*
+   * -----------------------------------------
+   * Product Name Validation
+   * -----------------------------------------
+   */
+
+  const trimmedProductName = newProduct.name.trim();
+
+  const productNameError =
+    nameTouched && trimmedProductName.length < 3
+      ? 'Product name must contain at least 3 characters.'
+      : '';
+
+  const isProductNameValid = trimmedProductName.length >= 3;
+
+  /*
+   * -----------------------------------------
+   * Fetch Categories
+   * -----------------------------------------
+   */
+
+  useEffect(() => {
     const fetchCategories = async () => {
       setLoadingCategories(true);
+
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/categories`);
-        if (response.ok) {
-          const data = await response.json();
-          setCategories(data);
-        } else {
-          console.error('Failed to fetch categories');
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/categories`
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch categories');
         }
+
+        const data = await response.json();
+        setCategories(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error(error);
+        showError('Unable to load categories.');
       } finally {
         setLoadingCategories(false);
       }
@@ -73,99 +229,151 @@ const [newProduct, setNewProduct] = useState<any>(editingProduct || {
     fetchCategories();
   }, []);
 
-  // Reset form when editingProduct changes
+  /*
+   * -----------------------------------------
+   * Reset / Edit Product
+   * -----------------------------------------
+   */
+
   useEffect(() => {
-    if (editingProduct) {
-      // If editingProduct has a category object, extract the ID
-      const categoryValue = typeof editingProduct.category === 'object' 
-        ? editingProduct.category._id 
-        : editingProduct.category;
-      
-      setNewProduct({
-        ...editingProduct,
-        category: categoryValue
-      });
-      setTempImages([]);
-    } else {
-setNewProduct({
-  name: '',
-  price: 0,
-  discount: 0,
-  stock: 0,
-  sizes: [],
-  colors: [],
-  images: [],
-  description: '',
-  specifications: '',
-  adminNote: '',
-  categoryId: '', // Change from category to categoryId
-  brand: '',
-  tags: [],
-  details: [],
-});
-      setTempImages([]);
-      setTempTag('');
-    }
+    setNewProduct(getInitialProduct());
+    setTempImages([]);
+    setTempTag('');
+    setError(null);
+    setSuccess(null);
+    setNameTouched(false);
   }, [editingProduct]);
 
-const handleCategorySelect = (categoryId: string) => {
-  setNewProduct(prev => ({ ...prev, categoryId: categoryId })); // Change to categoryId
-  setShowCategoryDropdown(false);
-};
+  /*
+   * -----------------------------------------
+   * Outside Click
+   * -----------------------------------------
+   */
 
-// Update the display logic
-const getCategoryName = (categoryId: string) => {
-  const category = categories.find(cat => cat._id === categoryId);
-  return category ? category.name : 'Select Category';
-};
-
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(target)
+      ) {
         setShowCategoryDropdown(false);
       }
-      if (colorPickerRef.current && !colorPickerRef.current.contains(event.target as Node)) {
+
+      if (
+        colorPickerRef.current &&
+        !colorPickerRef.current.contains(target)
+      ) {
         setShowColorPicker(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
-  // Handle escape key to exit fullscreen
+  /*
+   * -----------------------------------------
+   * Escape / Expanded Mode
+   * -----------------------------------------
+   */
+
   useEffect(() => {
-    const handleEscapeKey = (event: KeyboardEvent) => {
+    const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isExpanded) {
         setIsExpanded(false);
       }
     };
 
-    document.addEventListener('keydown', handleEscapeKey);
+    document.addEventListener('keydown', handleEscape);
+
     return () => {
-      document.removeEventListener('keydown', handleEscapeKey);
+      document.removeEventListener('keydown', handleEscape);
     };
   }, [isExpanded]);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files).slice(0, 3);
-      setTempImages((prev) => [...prev, ...files].slice(0, 3));
-    }
+  /*
+   * -----------------------------------------
+   * Image Preview Cleanup
+   * -----------------------------------------
+   */
+
+  useEffect(() => {
+    const urls = tempImages.map((file) => URL.createObjectURL(file));
+
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [tempImages]);
+
+  /*
+   * -----------------------------------------
+   * Category
+   * -----------------------------------------
+   */
+
+  const handleCategorySelect = (categoryId: string) => {
+    setField('categoryId', categoryId);
+    setShowCategoryDropdown(false);
   };
 
-  const handleAddCustomColor = () => {
-    if (customColor && !newProduct.colors.includes(customColor)) {
-      setNewProduct(prev => ({
-        ...prev,
-        colors: [...prev.colors, customColor]
-      }));
-    }
-    setShowColorPicker(false);
+  const getCategoryName = (categoryId: string) => {
+    const category = categories.find(
+      (cat) => cat._id === categoryId
+    );
+
+    return category?.name || 'Select Category';
   };
+
+  /*
+   * -----------------------------------------
+   * Images
+   * -----------------------------------------
+   */
+
+  const handleImageUpload = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (!e.target.files) return;
+
+    const files = Array.from(e.target.files);
+
+    const validFiles = files.filter((file) => {
+      if (!file.type.startsWith('image/')) {
+        showError(`${file.name} is not a valid image.`);
+        return false;
+      }
+
+      if (file.size > 3 * 1024 * 1024) {
+        showError(`${file.name} is larger than 3MB.`);
+        return false;
+      }
+
+      return true;
+    });
+
+    setTempImages((prev) =>
+      [...prev, ...validFiles].slice(0, 3)
+    );
+
+    e.target.value = '';
+  };
+
+  const removeTempImage = (index: number) => {
+    setTempImages((prev) =>
+      prev.filter((_, i) => i !== index)
+    );
+  };
+
+  /*
+   * -----------------------------------------
+   * Colors
+   * -----------------------------------------
+   */
 
   const handleColorSelect = (color: string) => {
     setNewProduct((prev) => ({
@@ -176,728 +384,1156 @@ const getCategoryName = (categoryId: string) => {
     }));
   };
 
+  const handleAddCustomColor = () => {
+    if (!customColor) return;
+
+    if (!newProduct.colors.includes(customColor)) {
+      setNewProduct((prev) => ({
+        ...prev,
+        colors: [...prev.colors, customColor],
+      }));
+    }
+
+    setShowColorPicker(false);
+  };
+
   const handleRemoveColor = (color: string) => {
-    setNewProduct(prev => ({
+    setNewProduct((prev) => ({
       ...prev,
-      colors: prev.colors.filter(c => c !== color)
+      colors: prev.colors.filter((c) => c !== color),
     }));
   };
 
+  /*
+   * -----------------------------------------
+   * Tags
+   * -----------------------------------------
+   */
 
   const handleAddTag = () => {
-    const trimmedTag = tempTag.trim();
-    if (trimmedTag && !newProduct.tags?.includes(trimmedTag)) {
-      setNewProduct(prev => ({
-        ...prev,
-        tags: [...(prev.tags || []), trimmedTag]
-      }));
+    const tag = tempTag.trim();
+
+    if (!tag) return;
+
+    if (newProduct.tags.includes(tag)) {
       setTempTag('');
+      return;
     }
+
+    setNewProduct((prev) => ({
+      ...prev,
+      tags: [...prev.tags, tag],
+    }));
+
+    setTempTag('');
   };
 
   const handleRemoveTag = (tag: string) => {
-    setNewProduct(prev => ({
+    setNewProduct((prev) => ({
       ...prev,
-      tags: prev.tags?.filter(t => t !== tag) || []
+      tags: prev.tags.filter((t) => t !== tag),
     }));
   };
 
-  const handleAddDetail = () => {
-    if (detailKey.trim() && detailValue.trim()) {
-      setNewProduct(prev => ({
-        ...prev,
-        details: [...(prev.details || []), { key: detailKey.trim(), value: detailValue.trim() }]
-      }));
-      setDetailKey('');
-      setDetailValue('');
-    }
-  };
-
-  const handleRemoveDetail = (index: number) => {
-    setNewProduct(prev => ({
-      ...prev,
-      details: prev.details?.filter((_, i) => i !== index) || []
-    }));
-  };
+  /*
+   * -----------------------------------------
+   * Description
+   * -----------------------------------------
+   */
 
   const handleDescriptionChange = (html: string) => {
-    setNewProduct(prev => ({ 
-      ...prev, 
-      description: html 
-    }));
+    setField('description', html);
   };
 
   const handleSpecificationsChange = (html: string) => {
-    setNewProduct(prev => ({ 
-      ...prev, 
-      specifications: html 
-    }));
+    setField('specifications', html);
   };
 
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-    
-//     // const imagePromises = tempImages.map((file) => {
-//     //   return new Promise<string>((resolve) => {
-//     //     const reader = new FileReader();
-//     //     reader.onload = () => resolve(reader.result as string);
-//     //     reader.readAsDataURL(file);
-//     //   });
-//     // });
-//     const formData = new FormData();
+  /*
+   * -----------------------------------------
+   * Validation
+   * -----------------------------------------
+   */
 
-//         tempImages.forEach((file) => {
-//           formData.append("images", file);
-//         });
+  const validateForm = () => {
+    const name = newProduct.name.trim();
 
-//         const uploadRes = await fetch(
-//           `${process.env.NEXT_PUBLIC_BACKEND_URL}/upload/images`,
-//           {
-//             method: "POST",
-//             body: formData,
-//           }
-//         );
-
-//         const uploadedUrls = await uploadRes.json();
-
-//     // const newImages = await Promise.all(imagePromises);
-//     // const allImages = [...(editingProduct?.images || []), ...newImages].slice(0, 3);
-//     console.log("UPLOAD RESPONSE:", data);
-//     console.log("uploadedUrls:", uploadedUrls);
-
-
-//     const allImages = [...(editingProduct?.images || []), ...uploadedUrls].slice(0, 3);
-
-// onSubmit({
-//   ...newProduct,
-//   images: allImages,
-// });
-
-//     onSubmit({
-//       ...newProduct,
-//       images: allImages,
-//     });
-
-//     // Only reset if not in edit mode
-//     if (!editingProduct) {
-//       setNewProduct({
-//         name: '',
-//         price: 0,
-//         discount: 0,
-//         stock: 0,
-//         sizes: [],
-//         colors: [],
-//         images: [],
-//         description: '',
-//         specifications: '',
-//         adminNote: '',
-//         category: '',
-//         brand: '',
-//         tags: [],
-//         details: [],
-//       });
-//       setTempImages([]);
-//       setTempTag('');
-//     }
-//   };
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-
-  try {
-    let uploadedUrls: string[] = [];
-
-    if (tempImages.length > 0) {
-      const formData = new FormData();
-
-      tempImages.forEach((file) => {
-        formData.append("images", file);
-      });
-
-      const uploadRes = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/upload/images`,
-        {
-          method: "POST",
-          body: formData,
-        }
+    if (name.length < 3) {
+      setNameTouched(true);
+      showError(
+        'Product name must contain at least 3 characters.'
       );
 
-      if (!uploadRes.ok) {
-        throw new Error("Image upload failed");
+      return false;
+    }
+
+    if (!newProduct.categoryId) {
+      showError('Please select a product category.');
+
+      return false;
+    }
+
+    if (newProduct.price < 0) {
+      showError('Price cannot be negative.');
+
+      return false;
+    }
+
+    if (newProduct.discount < 0 || newProduct.discount > 100) {
+      showError('Discount must be between 0 and 100.');
+
+      return false;
+    }
+
+    if (newProduct.stock < 0) {
+      showError('Stock cannot be negative.');
+
+      return false;
+    }
+
+    return true;
+  };
+
+  /*
+   * -----------------------------------------
+   * Submit
+   * -----------------------------------------
+   */
+
+  const handleSubmit = async (
+    e: React.FormEvent
+  ) => {
+    e.preventDefault();
+
+    setNameTouched(true);
+    setError(null);
+    setSuccess(null);
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      let uploadedUrls: string[] = [];
+
+      if (tempImages.length > 0) {
+        const formData = new FormData();
+
+        tempImages.forEach((file) => {
+          formData.append('images', file);
+        });
+
+        const uploadRes = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/upload/images`,
+          {
+            method: 'POST',
+            body: formData,
+          }
+        );
+
+        if (!uploadRes.ok) {
+          throw new Error('Image upload failed');
+        }
+
+        const data = await uploadRes.json();
+
+        uploadedUrls = Array.isArray(data.images)
+          ? data.images
+          : [];
+
+        if (uploadedUrls.length === 0) {
+          throw new Error(
+            'Images were uploaded but no image URLs were returned.'
+          );
+        }
       }
 
-      const data = await uploadRes.json();
-      uploadedUrls = Array.isArray(data.images) ? data.images : [];
+      const allImages = [
+        ...(editingProduct?.images || []),
+        ...uploadedUrls,
+      ].slice(0, 3);
 
-      console.log("UPLOAD RESPONSE:", data);
-    }
+      const productPayload = {
+        ...newProduct,
+        name: newProduct.name.trim(),
+        brand: newProduct.brand.trim(),
+        adminNote: newProduct.adminNote.trim(),
+        categoryId: newProduct.categoryId,
+        images: allImages,
+      };
 
-    const allImages = [
-      ...(editingProduct?.images || []),
-      ...uploadedUrls,
-    ].slice(0, 3);
+      onSubmit(productPayload as any);
 
-    onSubmit({
-      ...newProduct,
-      images: allImages,
-    });
+      showSuccess(
+        editingProduct
+          ? 'Product updated successfully.'
+          : 'Product created successfully.'
+      );
 
-    // reset form when creating
-    if (!editingProduct) {
-      setNewProduct({
-        name: '',
-        price: 0,
-        discount: 0,
-        stock: 0,
-        sizes: [],
-        colors: [],
-        images: [],
-        description: '',
-        specifications: '',
-        adminNote: '',
-        categoryId: '',
-        brand: '',
-        tags: [],
-        details: [],
-      });
+      if (!editingProduct) {
+        setNewProduct({
+          ...EMPTY_PRODUCT,
+          sizes: [],
+          colors: [],
+          images: [],
+          tags: [],
+          details: [],
+        });
 
-      setTempImages([]);
-      setTempTag('');
-    }
+        setTempImages([]);
+        setTempTag('');
+        setNameTouched(false);
+      }
+    } catch (error) {
+      console.error('Submit error:', error);
 
-  } catch (error) {
-    console.error("Submit error:", error);
-  }
-};
-
-  const toggleExpand = () => {
-    setIsExpanded(!isExpanded);
-    if (!isExpanded && formRef.current) {
-      // Scroll to top when expanding
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showError(
+        error instanceof Error
+          ? error.message
+          : 'Something went wrong while saving the product.'
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // Common colors for quick selection
-  const commonColors = [
-    '#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', 
-    '#6366f1', '#8b5cf6', '#ec4899', '#6b7280', '#000000'
-  ];
+  /*
+   * -----------------------------------------
+   * UI Helpers
+   * -----------------------------------------
+   */
+
+  const SectionHeader = ({
+    icon,
+    title,
+    description,
+  }: {
+    icon: React.ReactNode;
+    title: string;
+    description?: string;
+  }) => (
+    <div className="flex items-start gap-3 mb-5">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#DF2648]">
+        {icon}
+      </div>
+
+      <div>
+        <h3 className="font-semibold text-gray-900">
+          {title}
+        </h3>
+
+        {description && (
+          <p className="mt-0.5 text-xs text-gray-500">
+            {description}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+
+  const inputClass = (
+    hasError = false
+  ) =>
+    `w-full rounded-xl border px-3.5 py-3 text-sm outline-none transition-all ${
+      hasError
+        ? 'border-red-400 bg-red-50/30 focus:border-red-500 focus:ring-2 focus:ring-red-100'
+        : 'border-gray-200 bg-white focus:border-red-400 focus:ring-2 focus:ring-red-100'
+    }`;
+
+  /*
+   * -----------------------------------------
+   * Render
+   * -----------------------------------------
+   */
 
   return (
-    <div className={`${isExpanded ? 'fixed inset-0 z-50 bg-white overflow-y-auto p-4' : 'relative'}`}>
-      <form 
+    <div
+      className={
+        isExpanded
+          ? 'fixed inset-0 z-50 overflow-y-auto bg-gray-50 p-4 md:p-8'
+          : 'relative'
+      }
+    >
+      <form
         ref={formRef}
-        onSubmit={handleSubmit} 
-        className={`bg-white rounded-xl shadow-lg border border-gray-100 ${isExpanded ? 'max-w-6xl mx-auto p-8' : 'max-w-4xl mx-auto p-6'}`}
+        onSubmit={handleSubmit}
+        className={`mx-auto ${
+          isExpanded ? 'max-w-7xl' : 'max-w-5xl'
+        }`}
       >
-        <div className="flex justify-between items-center mb-6 pb-3 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-800">
-            {editingProduct ? 'Edit Product' : 'Add New Product'}
-          </h2>
-          <div className="flex items-center gap-2">
-            {onCancel && (
+        {/* Header */}
+        <header className="relative mb-6 overflow-hidden rounded-3xl border border-red-100 bg-white px-5 py-5 shadow-sm md:px-7 md:py-6">
+          <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-red-100/60 blur-3xl" />
+
+          <div className="pointer-events-none absolute -bottom-24 left-1/3 h-40 w-40 rounded-full bg-red-50 blur-3xl" />
+
+          <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-red-100 text-[#DF2648] shadow-sm">
+                <FiPackage size={22} />
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+                    {editingProduct
+                      ? 'Edit Product'
+                      : 'Add New Product'}
+                  </h1>
+
+                  <span className="hidden rounded-full bg-red-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#DF2648] sm:inline-flex">
+                    Admin
+                  </span>
+                </div>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  {editingProduct
+                    ? 'Update product information and inventory'
+                    : 'Create and configure a new product'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {onCancel && (
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:border-red-200 hover:bg-red-50 hover:text-[#DF2648]"
+                >
+                  Cancel
+                </button>
+              )}
+
               <button
                 type="button"
-                onClick={onCancel}
-                className="p-2 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="inline-flex items-center gap-2 rounded-xl border border-red-100 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:-translate-y-0.5 hover:border-red-200 hover:bg-red-50 hover:text-[#DF2648]"
               >
-                Cancel
+                {isExpanded ? (
+                  <>
+                    <FiMinimize2 />
+                    Collapse
+                  </>
+                ) : (
+                  <>
+                    <FiMaximize2 />
+                    Expand
+                  </>
+                )}
               </button>
-            )}
-            <button
-              type="button"
-              onClick={toggleExpand}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              title={isExpanded ? 'Collapse form' : 'Expand form'}
-            >
-              {isExpanded ? (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              ) : (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"></path>
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
-        
-        {isExpanded && (
-          <div className="mb-6 bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <div className="flex items-start">
-              <svg className="w-5 h-5 text-blue-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              <p className="text-blue-700 text-sm">You are in expanded mode. Press Escape or click the close icon to exit.</p>
             </div>
+          </div>
+        </header>
+
+        {/* Alerts */}
+        {(error || success) && (
+          <div className="mb-6 space-y-3">
+            {error && (
+              <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
+                <FiAlertCircle className="mt-0.5 shrink-0 text-red-500" />
+
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-red-700">
+                    {error}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setError(null)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <FiX />
+                </button>
+              </div>
+            )}
+
+            {success && (
+              <div className="flex items-start gap-3 rounded-2xl border border-green-200 bg-green-50 p-4">
+                <FiCheckCircle className="mt-0.5 shrink-0 text-green-500" />
+
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-green-700">
+                    {success}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSuccess(null)}
+                  className="text-green-500 hover:text-green-700"
+                >
+                  <FiX />
+                </button>
+              </div>
+            )}
           </div>
         )}
-      
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Product Name */}
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Product Name *</label>
-            <input
-              type="text"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors outline-none"
-              value={newProduct.name}
-              onChange={(e) => setNewProduct(p => ({ ...p, name: e.target.value }))}
-              required
-              placeholder="Enter product name"
-            />
-          </div>
 
-          {/* Category - Modern Selector */}
-   <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
-          <div className="relative" ref={categoryDropdownRef}>
-            <button
-              type="button"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors outline-none text-left flex items-center justify-between bg-white"
-              onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-              disabled={loadingCategories}
-            >
-              <div className="flex items-center">
-                {loadingCategories ? (
-                  <span className="text-gray-400">Loading categories...</span>
-                ) : newProduct.category ? (
-                  <span>{getCategoryName(newProduct.categoryId)}</span>
-                ) : (
-                  <span className="text-gray-400">Select Category</span>
-                )}
-              </div>
-              {!loadingCategories && (
-                <svg 
-                  className={`w-5 h-5 text-gray-400 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              )}
-            </button>
-            
-            {showCategoryDropdown && !loadingCategories && (
-              <div className="absolute z-10 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto">
-                {categories.map(category => (
-                  <button
-                    key={category._id}
-                    type="button"
-                    className={`w-full text-left p-3 flex items-center hover:bg-gray-50 transition-colors ${
-                      newProduct.category === category._id ? 'bg-red-50 text-red-700' : ''
-                    }`}
-                    onClick={() => handleCategorySelect(category._id)}
-                  >
-                    <span>{category.name}</span>
-                    {newProduct.categoryId === category._id && (
-                      <svg className="w-5 h-5 ml-auto text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-
-          {/* Brand */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Brand</label>
-            <input
-              type="text"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors outline-none"
-              value={newProduct.brand}
-              onChange={(e) => setNewProduct(p => ({ ...p, brand: e.target.value }))}
-              placeholder="Enter brand name"
-            />
-          </div>
-
-          {/* Price */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Price ($) *</label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
-              <input
-                type="number"
-                className="w-full pl-8 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors outline-none"
-                value={newProduct.price || ''}
-                onChange={(e) => setNewProduct(p => ({ ...p, price: +e.target.value }))}
-                min="0"
-                step="0.01"
-                required
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+          {/* LEFT / MAIN */}
+          <div className="space-y-6 xl:col-span-2">
+            {/* Basic Information */}
+            <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm md:p-6">
+              <SectionHeader
+                icon={<FiPackage />}
+                title="Basic Information"
+                description="Core information customers will see"
               />
-            </div>
-          </div>
 
-          {/* Discount */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Discount (%)</label>
-            <div className="relative">
-              <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
-              <input
-                type="number"
-                className="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors outline-none"
-                value={newProduct.discount || ''}
-                onChange={(e) => setNewProduct(p => ({ ...p, discount: +e.target.value }))}
-                min="0"
-                max="100"
-              />
-            </div>
-          </div>
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                {/* Product Name */}
+                <div className="md:col-span-2">
+                  <div className="mb-2 flex items-center justify-between">
+                    <label className="text-sm font-semibold text-gray-700">
+                      Product Name <span className="text-red-500">*</span>
+                    </label>
 
-          {/* Stock */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Stock *</label>
-            <input
-              type="number"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors outline-none"
-              value={newProduct.stock || ''}
-              onChange={(e) => setNewProduct(p => ({ ...p, stock: +e.target.value }))}
-              min="0"
-              required
-            />
-          </div>
-
-          {/* Sizes */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Sizes</label>
-            <input
-              type="text"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors outline-none"
-              // value={newProduct.sizes.join(',')}
-              onChange={(e) => setNewProduct(p => ({
-                ...p,
-                sizes: e.target.value.split(',').map(s => s.trim()).filter(s => s)
-              }))}
-              placeholder="S, M, L, XL"
-            />
-            <p className="text-xs text-gray-500 mt-1">Separate sizes with commas</p>
-          </div>
-
-          {/* Colors */}
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Colors</label>
-            
-            {/* Custom Color Picker */}
-            <div className="mb-4 flex items-center gap-3">
-              <div className="relative">
-                <div 
-                  className="w-10 h-10 rounded-md cursor-pointer border border-gray-300 shadow-sm"
-                  style={{ backgroundColor: customColor }}
-                  onClick={() => setShowColorPicker(!showColorPicker)}
-                />
-                <input
-                  type="color"
-                  value={customColor}
-                  onChange={(e) => setCustomColor(e.target.value)}
-                  className="absolute opacity-0 w-0 h-0"
-                  id="color-picker"
-                />
-                {showColorPicker && (
-                  <div className="absolute z-10 top-12 left-0 bg-white p-3 rounded-lg shadow-lg border border-gray-200" ref={colorPickerRef}>
-                    <input
-                      type="color"
-                      value={customColor}
-                      onChange={(e) => setCustomColor(e.target.value)}
-                      className="block mb-2"
-                    />
-                    <div className="flex gap-1">
-                      <input
-                        type="text"
-                        value={customColor}
-                        onChange={(e) => setCustomColor(e.target.value)}
-                        className="text-sm p-1 border rounded w-full"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddCustomColor}
-                        className="bg-blue-500 text-white px-2 py-1 rounded text-sm"
-                      >
-                        Add
-                      </button>
-                    </div>
+                    <span
+                      className={`text-xs ${
+                        isProductNameValid
+                          ? 'text-gray-400'
+                          : 'text-red-500'
+                      }`}
+                    >
+                      {newProduct.name.length}/3+
+                    </span>
                   </div>
-                )}
-              </div>
-              <span className="text-sm text-gray-600">Click to choose custom color</span>
-            </div>
 
-            {/* Common Colors */}
-            <div className="mb-4">
-              <p className="text-sm font-medium text-gray-700 mb-2">Common Colors</p>
-              <div className="grid grid-cols-5 gap-2">
-                {commonColors.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => handleColorSelect(color)}
-                    className={`h-10 rounded-md border-2 transition-all flex items-center justify-center ${
-                      newProduct.colors.includes(color)
-                        ? 'ring-2 ring-offset-2 ring-blue-500 scale-105 border-white'
-                        : 'border-gray-200 hover:scale-105'
-                    }`}
-                    style={{ backgroundColor: color }}
-                    title={color}
-                  >
-                    {newProduct.colors.includes(color) && (
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
+                  <input
+                    type="text"
+                    value={newProduct.name}
+                    onChange={(e) =>
+                      setField('name', e.target.value)
+                    }
+                    onBlur={() => setNameTouched(true)}
+                    placeholder="Enter product name"
+                    className={inputClass(
+                      !!productNameError
                     )}
-                  </button>
-                ))}
-              </div>
-            </div>
+                    maxLength={150}
+                    aria-invalid={!!productNameError}
+                  />
 
-            {/* Selected Colors */}
-            <div className="mt-4">
-              <p className="text-sm font-medium text-gray-700 mb-2">Selected Colors</p>
-              {newProduct.colors.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {newProduct.colors.map((color, index) => (
-                    <div key={index} className="flex items-center bg-gray-100 rounded-full pl-2 pr-1 py-1">
-                      <div 
-                        className="w-5 h-5 rounded-full mr-1 border border-gray-300"
-                        style={{ backgroundColor: color }}
-                      ></div>
-                      <span className="text-xs mr-1">{color}</span>
+                  {productNameError ? (
+                    <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-red-600">
+                      <FiAlertCircle />
+                      {productNameError}
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs text-gray-400">
+                      Product name must contain at least 3 characters.
+                    </p>
+                  )}
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Category <span className="text-red-500">*</span>
+                  </label>
+
+                  <div
+                    ref={categoryDropdownRef}
+                    className="relative"
+                  >
+                    <button
+                      type="button"
+                      disabled={loadingCategories}
+                      onClick={() =>
+                        setShowCategoryDropdown(
+                          !showCategoryDropdown
+                        )
+                      }
+                      className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white px-3.5 py-3 text-left text-sm transition hover:border-red-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-50"
+                    >
+                      <span
+                        className={
+                          newProduct.categoryId
+                            ? 'text-gray-800'
+                            : 'text-gray-400'
+                        }
+                      >
+                        {loadingCategories
+                          ? 'Loading categories...'
+                          : getCategoryName(
+                              newProduct.categoryId
+                            )}
+                      </span>
+
+                      <FiChevronDown
+                        className={`text-gray-400 transition-transform ${
+                          showCategoryDropdown
+                            ? 'rotate-180'
+                            : ''
+                        }`}
+                      />
+                    </button>
+
+                    {showCategoryDropdown &&
+                      !loadingCategories && (
+                        <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-64 overflow-y-auto rounded-xl border border-gray-200 bg-white p-1 shadow-xl">
+                          {categories.length === 0 ? (
+                            <div className="p-4 text-center text-sm text-gray-500">
+                              No categories found.
+                            </div>
+                          ) : (
+                            categories.map((category) => (
+                              <button
+                                key={category._id}
+                                type="button"
+                                onClick={() =>
+                                  handleCategorySelect(
+                                    category._id
+                                  )
+                                }
+                                className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${
+                                  newProduct.categoryId ===
+                                  category._id
+                                    ? 'bg-red-50 font-semibold text-[#DF2648]'
+                                    : 'text-gray-700 hover:bg-gray-50'
+                                }`}
+                              >
+                                {category.name}
+
+                                {newProduct.categoryId ===
+                                  category._id && (
+                                  <FiCheckCircle />
+                                )}
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                  </div>
+                </div>
+
+                {/* Brand */}
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Brand
+                  </label>
+
+                  <input
+                    type="text"
+                    value={newProduct.brand}
+                    onChange={(e) =>
+                      setField('brand', e.target.value)
+                    }
+                    placeholder="Enter brand name"
+                    className={inputClass()}
+                  />
+                </div>
+
+                {/* Price */}
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Price ($) <span className="text-red-500">*</span>
+                  </label>
+
+                  <div className="relative">
+                    <FiDollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+
+                    <input
+                      type="number"
+                      value={newProduct.price || ''}
+                      onChange={(e) =>
+                        setField(
+                          'price',
+                          Number(e.target.value)
+                        )
+                      }
+                      min={0}
+                      step="0.01"
+                      className={`${inputClass()} pl-10`}
+                    />
+                  </div>
+                </div>
+
+                {/* Discount */}
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Discount
+                  </label>
+
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={newProduct.discount || ''}
+                      onChange={(e) =>
+                        setField(
+                          'discount',
+                          Number(e.target.value)
+                        )
+                      }
+                      min={0}
+                      max={100}
+                      className={`${inputClass()} pr-10`}
+                    />
+
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                      %
+                    </span>
+                  </div>
+                </div>
+
+                {/* Stock */}
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Stock <span className="text-red-500">*</span>
+                  </label>
+
+                  <div className="relative">
+                    <FiLayers className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+
+                    <input
+                      type="number"
+                      value={newProduct.stock || ''}
+                      onChange={(e) =>
+                        setField(
+                          'stock',
+                          Number(e.target.value)
+                        )
+                      }
+                      min={0}
+                      className={`${inputClass()} pl-10`}
+                    />
+                  </div>
+                </div>
+
+                {/* Sizes */}
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Sizes
+                  </label>
+
+                  <input
+                    type="text"
+                    value={newProduct.sizes.join(', ')}
+                    onChange={(e) =>
+                      setField(
+                        'sizes',
+                        e.target.value
+                          .split(',')
+                          .map((s) => s.trim())
+                          .filter(Boolean)
+                      )
+                    }
+                    placeholder="S, M, L, XL"
+                    className={inputClass()}
+                  />
+
+                  <p className="mt-1.5 text-xs text-gray-400">
+                    Separate sizes with commas.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* Colors */}
+            <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm md:p-6">
+              <SectionHeader
+                icon={<FiTag />}
+                title="Colors"
+                description="Choose available product colors"
+              />
+
+              <div className="flex flex-wrap gap-2">
+                {commonColors.map((color) => {
+                  const selected =
+                    newProduct.colors.includes(color);
+
+                  return (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() =>
+                        handleColorSelect(color)
+                      }
+                      className={`group relative h-10 w-10 rounded-xl border-2 transition ${
+                        selected
+                          ? 'scale-105 border-[#DF2648] ring-2 ring-red-100'
+                          : 'border-gray-200 hover:scale-105'
+                      }`}
+                      style={{
+                        backgroundColor: color,
+                      }}
+                      title={color}
+                    >
+                      {selected && (
+                        <FiCheckCircle className="absolute inset-0 m-auto text-white drop-shadow" />
+                      )}
+                    </button>
+                  );
+                })}
+
+                {/* Custom */}
+                <div
+                  ref={colorPickerRef}
+                  className="relative"
+                >
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowColorPicker(
+                        !showColorPicker
+                      )
+                    }
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-dashed border-gray-300 text-gray-500 transition hover:border-red-300 hover:text-[#DF2648]"
+                    title="Custom color"
+                  >
+                    <FiPlus />
+                  </button>
+
+                  {showColorPicker && (
+                    <div className="absolute left-0 top-12 z-20 w-64 rounded-2xl border border-gray-200 bg-white p-4 shadow-xl">
+                      <p className="mb-3 text-sm font-semibold text-gray-700">
+                        Custom Color
+                      </p>
+
+                      <input
+                        type="color"
+                        value={customColor}
+                        onChange={(e) =>
+                          setCustomColor(
+                            e.target.value
+                          )
+                        }
+                        className="h-10 w-full cursor-pointer rounded-lg border"
+                      />
+
+                      <div className="mt-3 flex gap-2">
+                        <input
+                          value={customColor}
+                          onChange={(e) =>
+                            setCustomColor(
+                              e.target.value
+                            )
+                          }
+                          className="min-w-0 flex-1 rounded-lg border border-gray-200 px-2 py-2 text-xs"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={
+                            handleAddCustomColor
+                          }
+                          className="rounded-lg bg-[#DF2648] px-3 text-xs font-semibold text-white hover:bg-red-600"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Selected */}
+              {newProduct.colors.length > 0 && (
+                <div className="mt-5 border-t border-gray-100 pt-4">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                    Selected Colors
+                  </p>
+
+                  <div className="flex flex-wrap gap-2">
+                    {newProduct.colors.map((color) => (
+                      <div
+                        key={color}
+                        className="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 py-1 pl-1.5 pr-2"
+                      >
+                        <span
+                          className="h-5 w-5 rounded-full border border-gray-200"
+                          style={{
+                            backgroundColor: color,
+                          }}
+                        />
+
+                        <span className="text-xs text-gray-600">
+                          {color}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleRemoveColor(color)
+                          }
+                          className="text-gray-400 hover:text-red-500"
+                        >
+                          <FiX size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+
+            {/* Tags */}
+            <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm md:p-6">
+              <SectionHeader
+                icon={<FiTag />}
+                title="Tags"
+                description="Add searchable labels to the product"
+              />
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={tempTag}
+                  onChange={(e) =>
+                    setTempTag(e.target.value)
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                  placeholder="Type a tag and press Enter"
+                  className={`${inputClass()} flex-1`}
+                />
+
+                <button
+                  type="button"
+                  onClick={handleAddTag}
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#DF2648] px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-600"
+                >
+                  <FiPlus />
+                  Add
+                </button>
+              </div>
+
+              {newProduct.tags.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {newProduct.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1.5 text-xs font-medium text-[#DF2648]"
+                    >
+                      {tag}
+
                       <button
                         type="button"
-                        onClick={() => handleRemoveColor(color)}
-                        className="text-gray-500 hover:text-red-500 rounded-full w-5 h-5 flex items-center justify-center"
+                        onClick={() =>
+                          handleRemoveTag(tag)
+                        }
+                        className="hover:text-red-800"
                       >
-                        ×
+                        <FiX />
                       </button>
-                    </div>
+                    </span>
                   ))}
                 </div>
-              ) : (
-                <p className="text-sm text-gray-500">No colors selected yet</p>
               )}
-            </div>
-          </div>
+            </section>
 
-          {/* Product Details */}
-          {/* <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Product Details</label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-              <input
-                type="text"
-                className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors outline-none"
-                value={detailKey}
-                onChange={(e) => setDetailKey(e.target.value)}
-                placeholder="Detail name (e.g., Weight)"
+            {/* Description */}
+            <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm md:p-6">
+              <SectionHeader
+                icon={<FiFileText />}
+                title="Product Content"
+                description="Detailed product description and specifications"
               />
-              <input
-                type="text"
-                className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors outline-none"
-                value={detailValue}
-                onChange={(e) => setDetailValue(e.target.value)}
-                placeholder="Detail value (e.g., 500g)"
-              />
-              <button
-                type="button"
-                onClick={handleAddDetail}
-                className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors"
-              >
-                Add Detail
-              </button>
-            </div>
-            
-            {newProduct.details && newProduct.details.length > 0 && (
-              <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                {newProduct.details.map((detail: {key: string, value: string}, index: number) => (
-                  <div key={index} className="flex justify-between items-center py-1 border-b border-gray-200 last:border-b-0">
-                    <span className="font-medium">{detail.key}:</span>
-                    <div className="flex items-center">
-                      <span className="mr-2">{detail.value}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveDetail(index)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        ×
-                      </button>
-                  </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div> */}
 
-          {/* Tags */}
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors outline-none"
-                value={tempTag}
-                onChange={(e) => setTempTag(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-                placeholder="Enter tag and press Add"
-              />
-              <button
-                type="button"
-                onClick={handleAddTag}
-                className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center"
-              >
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                </svg>
-                Add
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-3">
-              {newProduct.tags?.map((tag, index) => (
-                <div
-                  key={index}
-                  className="bg-red-50 text-red-700 px-3 py-1.5 rounded-full text-sm flex items-center gap-2 transition-colors hover:bg-red-100"
-                >
-                  {tag}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveTag(tag)}
-                    className="text-red-700 hover:text-red-800 text-lg font-bold"
-                    title="Remove tag"
-                  >
-                    ×
-                  </button>
+              <div className="space-y-5">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Description
+                  </label>
+
+                  <DescriptionEditor
+                    value={newProduct.description}
+                    onChange={handleDescriptionChange}
+                    placeholder="Enter product description..."
+                  />
                 </div>
-              ))}
-            </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Specifications
+                  </label>
+
+                  <DescriptionEditor
+                    value={
+                      newProduct.specifications
+                    }
+                    onChange={
+                      handleSpecificationsChange
+                    }
+                    placeholder="Enter product specifications..."
+                  />
+                </div>
+              </div>
+            </section>
           </div>
 
-          {/* Admin Note Field */}
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Admin Note
+          {/* RIGHT SIDEBAR */}
+          <div className="space-y-6">
+            {/* Product Status */}
+            <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+              <SectionHeader
+                icon={<FiSettings />}
+                title="Product Overview"
+                description="Quick summary"
+              />
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+                  <span className="text-sm text-gray-500">
+                    Category
+                  </span>
+
+                  <span className="max-w-[150px] truncate text-right text-sm font-semibold text-gray-800">
+                    {getCategoryName(
+                      newProduct.categoryId
+                    )}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+                  <span className="text-sm text-gray-500">
+                    Price
+                  </span>
+
+                  <span className="text-sm font-semibold text-gray-800">
+                    ${newProduct.price.toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+                  <span className="text-sm text-gray-500">
+                    Stock
+                  </span>
+
+                  <span
+                    className={`text-sm font-semibold ${
+                      newProduct.stock === 0
+                        ? 'text-red-600'
+                        : 'text-gray-800'
+                    }`}
+                  >
+                    {newProduct.stock}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+                  <span className="text-sm text-gray-500">
+                    Images
+                  </span>
+
+                  <span className="text-sm font-semibold text-gray-800">
+                    {Math.min(
+                      3,
+                      (newProduct.images?.length || 0) +
+                        tempImages.length
+                    )}
+                    /3
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            {/* Images */}
+            <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+              <SectionHeader
+                icon={<FiImage />}
+                title="Product Images"
+                description="Maximum 3 images, 3MB each"
+              />
+
+              <label
+                htmlFor="image-upload"
+                className="group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center transition hover:border-red-300 hover:bg-red-50/30"
+              >
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-gray-400 shadow-sm transition group-hover:text-[#DF2648]">
+                  <FiUploadCloud size={24} />
+                </div>
+
+                <p className="text-sm font-semibold text-gray-700">
+                  Click to upload
+                </p>
+
+                <p className="mt-1 text-xs text-gray-400">
+                  PNG, JPG, GIF up to 3MB
+                </p>
+
+                <input
+                  id="image-upload"
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={
+                    newProduct.images.length +
+                      tempImages.length >=
+                    3
+                  }
+                  className="hidden"
+                />
+              </label>
+
+              {(tempImages.length > 0 ||
+                newProduct.images?.length > 0) && (
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  {newProduct.images?.map(
+                    (image: string, index: number) => (
+                      <div
+                        key={`existing-${index}`}
+                        className="relative aspect-square overflow-hidden rounded-xl border border-gray-200"
+                      >
+                        <img
+                          src={image}
+                          alt={`Existing ${index + 1}`}
+                          className="h-full w-full object-cover"
+                        />
+
+                        <span className="absolute left-1 top-1 rounded-md bg-black/60 px-1.5 py-0.5 text-[9px] font-medium text-white">
+                          Existing
+                        </span>
+                      </div>
+                    )
+                  )}
+
+                  {tempImages.map((file, index) => {
+                    const url =
+                      URL.createObjectURL(file);
+
+                    return (
+                      <div
+                        key={`${file.name}-${index}`}
+                        className="group relative aspect-square overflow-hidden rounded-xl border border-gray-200"
+                      >
+                        <img
+                          src={url}
+                          alt={`Preview ${index + 1}`}
+                          className="h-full w-full object-cover"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            removeTempImage(index)
+                          }
+                          className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-lg bg-red-500 text-white opacity-0 shadow transition group-hover:opacity-100"
+                        >
+                          <FiTrash2 size={13} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            {/* Admin Note */}
+            <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+              <SectionHeader
+                icon={<FiSettings />}
+                title="Admin Note"
+                description="Visible to administrators only"
+              />
+
               <button
                 type="button"
-                onClick={() => setAdminNoteSuggestions(!adminNoteSuggestions)}
-                className="ml-2 text-xs text-blue-500 hover:text-blue-700"
+                onClick={() =>
+                  setShowAdminSuggestions(
+                    !showAdminSuggestions
+                  )
+                }
+                className="mb-3 text-xs font-semibold text-[#DF2648] hover:text-red-700"
               >
-                {adminNoteSuggestions ? 'Hide suggestions' : 'Show suggestions'}
+                {showAdminSuggestions
+                  ? 'Hide suggestions'
+                  : 'Show quick suggestions'}
               </button>
-            </label>
-            
-            {adminNoteSuggestions && (
-              <div className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-sm text-gray-600 mb-2">Quick suggestions:</p>
-                <div className="flex flex-wrap gap-2">
-                  {commonAdminNotes.map((note, index) => (
+
+              {showAdminSuggestions && (
+                <div className="mb-3 max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-gray-100 bg-gray-50 p-2">
+                  {commonAdminNotes.map((note) => (
                     <button
-                      key={index}
+                      key={note}
                       type="button"
-                      onClick={() => setNewProduct(prev => ({ ...prev, adminNote: note }))}
-                      className="text-xs bg-white border border-gray-300 rounded-full px-3 py-1 hover:bg-gray-100 transition-colors"
+                      onClick={() =>
+                        setField(
+                          'adminNote',
+                          note
+                        )
+                      }
+                      className="block w-full rounded-lg bg-white px-3 py-2 text-left text-xs text-gray-600 transition hover:bg-red-50 hover:text-[#DF2648]"
                     >
                       {note}
                     </button>
                   ))}
                 </div>
-              </div>
-            )}
-            
-            <textarea
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors outline-none"
-              value={newProduct.adminNote}
-              onChange={(e) => setNewProduct(p => ({ ...p, adminNote: e.target.value }))}
-              placeholder="Internal note for administrators only"
-              rows={2}
-            />
-          </div>
+              )}
 
-          {/* Images */}
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Product Images (max 3)</label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center transition-colors hover:border-red-300">
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-                id="image-upload"
+              <textarea
+                value={newProduct.adminNote}
+                onChange={(e) =>
+                  setField(
+                    'adminNote',
+                    e.target.value
+                  )
+                }
+                rows={4}
+                placeholder="Internal note for administrators..."
+                className={inputClass() + ' resize-none'}
               />
-              <label htmlFor="image-upload" className="cursor-pointer block">
-                <svg className="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
-                <span className="text-red-500 font-medium">Click to upload</span> or drag and drop
-                <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 3MB each</p>
-              </label>
+            </section>
+          </div>
+        </div>
+
+        {/* Submit */}
+        <div className="mt-6 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm md:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-gray-800">
+                Ready to save?
+              </p>
+
+              <p className="mt-0.5 text-xs text-gray-500">
+                Make sure the product name contains at least 3
+                characters.
+              </p>
             </div>
-            <div className="flex gap-4 mt-4 flex-wrap">
-              {tempImages.map((file, index) => (
-                <div key={index} className="relative group">
-                  <img
-                    src={URL.createObjectURL(file)}
-                    alt={`Preview ${index}`}
-                    className="w-24 h-24 object-cover rounded-lg border shadow-sm"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setTempImages(prev => prev.filter((_, i) => i !== index))}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
-                    title="Remove image"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-              {newProduct.images?.map((image: string, index: number) => (
-                <div key={`existing-${index}`} className="relative">
-                  <img
-                    src={image}
-                    alt={`Existing ${index}`}
-                    className="w-24 h-24 object-cover rounded-lg border shadow-sm"
-                  />
-                  <span className="absolute top-0 right-0 bg-gray-800 text-white text-xs px-1 rounded-bl-lg">
-                    Existing
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
 
-          {/* Description - Using the new Editor Component */}
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-            <DescriptionEditor
-              value={newProduct.description}
-              onChange={handleDescriptionChange}
-              placeholder="Enter product description..."
-            />
-          </div>
-
-          {/* Specifications - Using the same Editor Component */}
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Specifications</label>
-            <DescriptionEditor
-              value={newProduct.specifications}
-              onChange={handleSpecificationsChange}
-              placeholder="Enter product specifications..."
-            />
-          </div>
-
-          {/* Submit Button */}
-          <div className="md:col-span-2 pt-4 border-t border-gray-200">
             <button
               type="submit"
-              className="w-full bg-red-500 text-white py-3 px-4 rounded-lg hover:bg-red-600 transition-colors font-medium flex items-center justify-center shadow-md"
+              disabled={
+                isSubmitting || !isProductNameValid
+              }
+              className="inline-flex min-w-[190px] items-center justify-center gap-2 rounded-xl bg-[#DF2648] px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-red-600 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-              </svg>
-              {editingProduct ? 'Update Product' : 'Add Product'}
+              {isSubmitting ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <FiPlus />
+
+                  {editingProduct
+                    ? 'Update Product'
+                    : 'Add Product'}
+                </>
+              )}
             </button>
           </div>
         </div>
+
+        {isExpanded && (
+          <div className="pb-8 pt-4 text-center text-xs text-gray-400">
+            Press <kbd className="rounded border border-gray-200 bg-white px-1.5 py-0.5 font-medium">
+              ESC
+            </kbd>{' '}
+            to exit expanded mode.
+          </div>
+        )}
       </form>
     </div>
   );

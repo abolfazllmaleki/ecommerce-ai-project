@@ -1,21 +1,20 @@
-import Sidebar from '@/app/components/Sidebar/Sidebar';
-import WishList from '@/app/components/WishList/WishList';
+'use client';
+
+import React from 'react';
 import UserPageLayout from '@/app/components/UserPageLayout/UserPageLayout';
+import AccountPageShell from '@/app/components/AccountPageShell/AccountPageShell';
+import WishList from '@/app/components/WishList/WishList';
 
 const Page = () => {
   return (
     <UserPageLayout>
-      <div className="flex gap-6">
-        {/* Sidebar */}
-        <div className="w-1/4">
-          <Sidebar />
-        </div>
-
-        {/* Main Content */}
-        <div className="w-3/4">
-          <WishList />
-        </div>
-      </div>
+      <AccountPageShell
+        title="Wishlist"
+        description="Keep your favorite products in one place."
+        compact
+      >
+        <WishList />
+      </AccountPageShell>
     </UserPageLayout>
   );
 };
